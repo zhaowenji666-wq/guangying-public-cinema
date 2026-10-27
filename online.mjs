@@ -34,6 +34,52 @@ const sourceWatcher=setInterval(()=>{
 },5000);
 sourceWatcher.unref();
 const tokens=new Map(),tokenUrls=new Map(),cache=new Map();
+// 源站普遍对单连接限速（实测单连接 0.08MB/s，8 连接并发 1.9MB/s）。
+// 这里对 m3u8 媒体分片做并发预取+内存缓存，把叠加带宽真正用起来。
+const segCache=new Map();      // 分段 URL -> {buf, type, at}
+const segInflight=new Map();   // 分段 URL -> Promise（去重，避免重复请求）
+const playlistCache=new Map(); // 子播放列表 URL -> {text, at}
+let segCacheBytes=0;
+const SEG_TTL=6*3600000, SEG_MAX_BYTES=220*1024*1024, PREFETCH=6;
+function segGet(url){const e=segCache.get(url);if(!e)return null;if(Date.now()-e.at>SEG_TTL){segCache.delete(url);segCacheBytes-=e.buf.length;return null;}e.at=Date.now();return e;}
+function segPut(url,buf,type){const old=segCache.get(url);if(old)segCacheBytes-=old.buf.length;if(segCacheBytes+buf.length>SEG_MAX_BYTES){for(const [k,v] of segCache){if(segCacheBytes+buf.length<=SEG_MAX_BYTES)break;segCache.delete(k);segCacheBytes-=v.buf.length;}}segCache.set(url,{buf,type,at:Date.now()});segCacheBytes+=buf.length;}
+async function fetchSeg(url){
+ const hit=segGet(url);if(hit)return hit;
+ if(segInflight.has(url))return segInflight.get(url);
+ const task=(async()=>{
+  try{
+   const {response}=await remote(url,{});
+   const chunks=[];let size=0;
+   for await(const chunk of response){size+=chunk.length;if(size>48*1024*1024){response.destroy();throw Error('分段过大');}chunks.push(chunk);}
+   const buf=Buffer.concat(chunks),type=String(response.headers['content-type']||'');
+   segPut(url,buf,type);return {buf,type,at:Date.now()};
+  }finally{segInflight.delete(url);}
+ })();
+ segInflight.set(url,task);return task;
+}
+// 后台预取后续分段：不等用户看，先把下面几段并发拉进缓存。
+function prefetchPlaylist(playlistUrl){
+ if(!playlistUrl||playlistUrl.startsWith('/'))return;
+ (async()=>{
+  try{
+   let cur=playlistUrl;
+   for(let depth=0;depth<3;depth++){
+    const {response,url:final}=await remote(cur,{});
+    const chunks=[];for await(const c of response)chunks.push(c);
+    const text=Buffer.concat(chunks).toString();
+    const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    if(/mpegurl/i.test(String(response.headers['content-type']||''))||/\.m3u8(?:[?#]|$)/i.test(final)){
+     const variant=lines.find(x=>!x.startsWith('#')&&!/\.(ts|m4s|mp4)(?:[?#]|$)/i.test(x));
+     if(variant){cur=new URL(variant,final).href;continue;}
+     const segs=lines.filter(x=>!x.startsWith('#')&&/\.(ts|m4s|mp4)(?:[?#]|$)/i.test(x)).slice(0,PREFETCH).map(s=>new URL(s,final).href);
+     // 并发预取，忽略失败（用户可能会切走）
+     segs.forEach(u=>{if(!segGet(u))fetchSeg(u).catch(()=>{});});
+    }
+    return;
+   }
+  }catch{}
+ })();
+}
 const plain=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
 export function publicAddress(address){
  if(net.isIPv4(address)){const [a,b]=address.split('.').map(Number);return !(a===0||a===10||a===127||a===169&&b===254||a===172&&b>=16&&b<=31||a===192&&b===168||a===100&&b>=64&&b<=127||a>=224||a===198&&(b===18||b===19));}
@@ -103,12 +149,23 @@ export async function onlineRoute(req,res,url,send){
   const record=tokens.get(url.pathname.split('/').pop());
   if(!record||Date.now()-record.at>6*3600000){send(req,res,{error:'播放链接已过期，请重新搜索'},'application/json',410);return true;}
   try{
+   const type0=/\.(ts|m4s|mp4)(?:[?#]|$)/i.test(record.url)?'segment':null;
+   // 媒体分段走内存缓存：命中直接吐，未命中则并发拉取，并顺手预热后续分段。
+   if(type0==='segment'||segCache.has(record.url)){
+    try{
+     const seg=await fetchSeg(record.url);
+     const out={'Content-Type':/^(image|video|audio)\//.test(seg.type)?seg.type:/application\/(?:mp2t|octet-stream)/,'Cache-Control':'public, max-age=21600','X-Content-Type-Options':'nosniff','Accept-Ranges':'none','Content-Length':String(seg.buf.length)};
+     res.writeHead(200,out);res.end(seg.buf);return true;
+    }catch(e){/* 缓存路径失败则回退到直连转发 */}
+   }
    const headers={};if(req.headers.range&&/^bytes=\d*-\d*$/.test(req.headers.range))headers.Range=req.headers.range;
    const {response,url:finalUrl}=await remote(record.url,headers);
    res.once('close',()=>response.destroy());
    const type=String(response.headers['content-type']||'');
    if(/mpegurl/i.test(type)||/\.m3u8(?:\?|$)/i.test(finalUrl)){
     const text=(await body(response,2*1024*1024)).toString();if(!text.trimStart().startsWith('#EXTM3U'))throw Error('播放列表格式无效');
+    // 响应播放列表的同时，后台并发预取开头几段，用户拖到开头或起播时已经就绪。
+    prefetchPlaylist(finalUrl);
     send(req,res,rewritePlaylist(text,finalUrl),'application/vnd.apple.mpegurl');
    }else{
     const out={'Content-Type':/^(image|video|audio)\//.test(type)?type:'application/octet-stream','Cache-Control':'private, max-age=120','X-Content-Type-Options':'nosniff'};

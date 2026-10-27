@@ -208,12 +208,15 @@ async function openMovie(movie,transfer=null){
 }
 function playEpisode(index,time=0,fromStart=false){
  if(!current?.episodes[index])return;stop();episode=index;const version=playVersion,video=$('#online-video');renderEpisodes();const url=current.episodes[index].url;pendingPlayback={episode:index,episodeTitle:current.episodes[index].title,time};playerStatus('正在连接 '+current.sourceName+' · '+current.episodes[index].title);
+ warmSegments(url,4);
  resetPlayerPlus();
  const loaded=()=>{if(version!==playVersion)return;const seek=fromStart?0:(time||Number(plusPrefs.skipIntro)||0);if(seek>0&&Number.isFinite(video.duration))video.currentTime=Math.min(seek,Math.max(0,video.duration-2));if(typeof plusPrefs.volume==='number')video.volume=Math.max(0,Math.min(1,plusPrefs.volume));if(plusPrefs.muted)video.muted=true;video.playbackRate=Number($('#online-speed').value);video.play().catch(()=>playerStatus('已就绪，请点击播放器中的播放按钮。'));};
  video.onloadedmetadata=loaded;
  // HLS.js is bundled locally, matching DecoTV's player dependency.
  if(current.episodes[index].hls!==false&&window.Hls?.isSupported()){
-  let recovered=false,networkRetries=0;hls=new Hls({maxBufferLength:60,maxMaxBufferLength:90,backBufferLength:30,manifestLoadingTimeOut:15000,fragLoadingTimeOut:20000,manifestLoadingMaxRetry:2,fragLoadingMaxRetry:2});
+  // 源站按单连接限速（实测单连接约 0.08MB/s，8 连接并发可达 1.9MB/s），
+  // 因此改用多连接分片并发拉取 + 更深的预缓冲，尽量吃满叠加带宽。
+  let recovered=false,networkRetries=0;hls=new Hls({maxBufferLength:90,maxMaxBufferLength:180,backBufferLength:30,maxBufferSize:120*1000*1000,manifestLoadingTimeOut:15000,fragLoadingTimeOut:30000,manifestLoadingMaxRetry:3,fragLoadingMaxRetry:4,startLevel:-1,abrEwmaDefaultEstimate:3000000,capLevelToPlayerSize:true});
   hls.on(Hls.Events.ERROR,(_event,data)=>{if(version!==playVersion||!data.fatal)return;if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&!recovered){recovered=true;hls.recoverMediaError();}else if(data.type===Hls.ErrorTypes.NETWORK_ERROR&&networkRetries++<1){playerStatus('网络中断，正在重连一次…');if(/manifest|levelLoad/i.test(data.details||''))hls.loadSource(url);else hls.startLoad(video.currentTime||-1);}else{hls.destroy();hls=null;if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=url;playerStatus('切换到浏览器原生 HLS 播放。');}else autoFailover();}});
   configureHlsPlus(hls);
   hls.loadSource(url);hls.attachMedia(video);
@@ -246,6 +249,27 @@ async function probeSource(movie,episodeTitle='',episodeIndex=0){
 async function fastestSource(group,episodeTitle='',episodeIndex=0){
  const probes=await Promise.allSettled(group.slice(0,4).map(m=>probeSource(m,episodeTitle,episodeIndex)));
  return probes.filter(p=>p.status==='fulfilled').map(p=>p.value).sort((a,b)=>a.ms-b.ms)[0]||null;
+}
+// 源站单连接限速明显，起播前用多条并发连接把开头的分段先拉进浏览器缓存，
+// 后续 hls.js 命中 HTTP 缓存即秒取，避免起播时干等一两段。
+async function warmSegments(playlistUrl,count=4){
+ try{
+  const seen=new Map();
+  let url=playlistUrl;
+  for(let depth=0;depth<4;depth++){
+   const r=await fetch(url,{cache:'force-cache',signal:AbortSignal.timeout(9000)});
+   if(!r.ok)return;
+   const text=await r.text();
+   const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+   const variants=lines.filter(x=>!x.startsWith('#')&&!/\.(ts|m4s|mp4)(?:\?|$)/i.test(x));
+   if(variants.length){url=new URL(variants[0],new URL(url,location.origin)).href;continue;}
+   const segs=lines.filter(x=>!x.startsWith('#')&&/\.(ts|m4s|mp4)(?:\?|$)/i.test(x));
+   if(!segs.length)return;
+   const abs=segs.slice(0,count).map(s=>new URL(s,new URL(url,location.origin)).href);
+   abs.forEach(u=>{if(seen.has(u))return;seen.set(u,1);fetch(u,{cache:'force-cache',priority:'low'}).catch(()=>{});});
+   return;
+  }
+ }catch{}
 }
 async function autoFailover(){
  if(!$('#online-player').open||!activeGroup.length)return;
