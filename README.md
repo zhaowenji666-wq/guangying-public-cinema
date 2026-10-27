@@ -37,6 +37,18 @@
 npm run deploy:pages
 ```
 
+### 片源体检
+
+采集源会不定期失效，用下面的命令做一次全源体检（搜索 → 详情 → 拉取播放列表逐项验证），
+坏源会被自动停用，前端不再请求它们：
+
+```bash
+npm run audit:sources
+```
+
+> 体检脚本必须探测**线上站点**而不是本机：Cloudflare 的网络与本机不同
+> （B 站、play.xluuss.com 都是本机通、Cloudflare 不通），只有线上探测才代表用户真实体验。
+
 （Workers 版 `npm run deploy:worker` 仍保留，但国内访问不了，仅作备用。）
 
 从你的网络实测对比：

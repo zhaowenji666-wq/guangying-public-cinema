@@ -170,7 +170,7 @@ async function search(retry=false){
  async function worker(){while(next<queue.length&&version===searchVersion){
   const source=queue[next++],controller=new AbortController(),started=performance.now();controllers.push(controller);
   const tag=document.createElement('span');tag.textContent=source.name+' · 搜索中';$('#source-progress').append(tag);
-  const timeout=setTimeout(()=>controller.abort(),16000);
+  const timeout=setTimeout(()=>controller.abort(),12000);
   try{
    const r=await fetch(EXT_ORIGIN+'/api/online/search?'+new URLSearchParams({source:source.id,q}),{signal:controller.signal}),d=await r.json();
    if(version!==searchVersion)return;if(!r.ok)throw Error(d.error);
@@ -179,7 +179,7 @@ async function search(retry=false){
   finally{clearTimeout(timeout);controllers=controllers.filter(c=>c!==controller);}
   finished++;status(`已完成 ${finished}/${queue.length} 个片源 · ${cards.length} 部影片 · ${failed} 个片源暂不可用`);
  }}
- await Promise.all(Array.from({length:Math.min(5,queue.length)},worker));
+ await Promise.all(Array.from({length:Math.min(8,queue.length)},worker));
  if(version!==searchVersion)return;searching=false;$('#cancel-search').hidden=true;$('#retry-failed').hidden=!failedSources.length;localStorage.setItem('cinema-online-health',JSON.stringify(health));render();
  if(!results.length)status(`未找到结果，${failed}/${queue.length} 个片源不可用。可换片名或调整片源后重试。`);rememberSearch();
 }
