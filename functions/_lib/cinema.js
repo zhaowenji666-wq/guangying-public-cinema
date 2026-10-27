@@ -1,0 +1,124 @@
+// 与 workers/worker.js 共用的核心逻辑，供 Cloudflare Pages Functions 调用。
+// 选择 Pages 而不是 Workers 的原因：*.workers.dev 在国内 DNS 被污染（解析到 Facebook 段），
+// 而 *.pages.dev 解析正常，国内可直接访问。
+import { sources } from '../_sources.js';
+
+export { sources };
+
+const PREFETCH = 12;
+const SEG_RE = /\.(ts|m4s|mp4|mp2t)(?:[?#]|$)/i;
+const enc = new TextEncoder();
+
+async function hmac(secret, msg) {
+  const k = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(msg))))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+const b64url = s => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64url = s => atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+
+export async function register(secret, url) {
+  if (!/^https?:\/\//i.test(url)) return '';
+  const payload = b64url(JSON.stringify({ u: url, e: Date.now() + 6 * 3600 * 1000 }));
+  return '/online/media/' + payload + '.' + (await hmac(secret, payload)).slice(0, 24);
+}
+export async function resolve(secret, token) {
+  const dot = String(token).lastIndexOf('.');
+  if (dot < 1) return null;
+  const payload = token.slice(0, dot), sig = token.slice(dot + 1);
+  if ((await hmac(secret, payload)).slice(0, 24) !== sig) return null;
+  try {
+    const data = JSON.parse(unb64url(payload));
+    if (!data.e || data.e < Date.now()) return null;
+    return /^https?:\/\//i.test(data.u) ? data.u : null;
+  } catch { return null; }
+}
+
+const plain = s => String(s || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+function parseEpisodes(value) {
+  let episodes = [];
+  for (const group of String(value || '').split('$$$')) {
+    const entries = group.split('#').flatMap(entry => {
+      const split = entry.indexOf('$');
+      if (split < 0) return [];
+      const title = plain(entry.slice(0, split)), url = entry.slice(split + 1).trim();
+      return /^https?:\/\//i.test(url) ? [{ title: title || '正片', url }] : [];
+    });
+    if (entries.length > episodes.length) episodes = entries;
+  }
+  return episodes;
+}
+
+async function makeResult(secret, item, source) {
+  return {
+    id: String(item.vod_id),
+    title: plain(item.vod_name),
+    actors: plain(item.vod_actor),
+    director: plain(item.vod_director),
+    genre: plain(item.vod_class || item.type_name),
+    type: plain(item.type_name),
+    year: plain(item.vod_year).match(/\d{4}/)?.[0] || '',
+    poster: await register(secret, item.vod_pic),
+    remarks: plain(item.vod_remarks),
+    description: plain(item.vod_content).slice(0, 3000),
+    source: source.id,
+    sourceName: source.name,
+    episodes: await Promise.all(parseEpisodes(item.vod_play_url).map(async e => ({
+      title: e.title,
+      url: await register(secret, e.url),
+      hls: !/\.(mp4|webm|mkv)(?:[?#]|$)/i.test(e.url),
+    }))),
+  };
+}
+
+export async function query(secret, source, params) {
+  const u = new URL(source.api);
+  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+  const r = await fetch(u.href, { headers: { 'User-Agent': 'Mozilla/5.0' }, cf: { cacheTtl: 600, cacheEverything: true } });
+  if (!r.ok) throw Error('片源返回 ' + r.status);
+  const data = await r.json();
+  if (!Array.isArray(data.list)) throw Error('片源未返回影片列表');
+  const norm = s => plain(s).toLowerCase().replace(/\s/g, '');
+  const list = data.list.filter(m => m.vod_id && m.vod_name &&
+    !/成人版|伦理片|色情|情色|AV女优/.test(m.vod_name + ' ' + (m.type_name || '')) &&
+    (!params.wd || norm([m.vod_name, m.vod_actor, m.vod_director].filter(Boolean).join(' ')).includes(norm(params.wd))));
+  return await Promise.all(list.slice(0, 60).map(m => makeResult(secret, m, source)));
+}
+
+export async function rewritePlaylist(secret, text, baseUrl) {
+  const out = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) { out.push(line); continue; }
+    if (line.startsWith('#')) { out.push(line); continue; }
+    out.push(await register(secret, new URL(line.trim(), baseUrl).href));
+  }
+  return out.join('\n');
+}
+
+// 源站对单连接限速，靠并发预取把叠加带宽吃满
+export function prefetchSegments(playlistUrl, waitUntil) {
+  waitUntil((async () => {
+    try {
+      let cur = playlistUrl;
+      for (let depth = 0; depth < 3; depth++) {
+        const r = await fetch(cur, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (!r.ok) return;
+        const text = await r.text();
+        const lines = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+        const variant = lines.find(x => !x.startsWith('#') && !SEG_RE.test(x));
+        if (variant) { cur = new URL(variant, cur).href; continue; }
+        const segs = lines.filter(x => !x.startsWith('#') && SEG_RE.test(x))
+          .slice(0, PREFETCH).map(s => new URL(s, cur).href);
+        await Promise.allSettled(segs.map(u => fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0' } }).then(r => r.arrayBuffer())));
+        return;
+      }
+    } catch {}
+  })());
+}
+
+export const isSegment = url => SEG_RE.test(url);
+export const json = (data, status = 200) => new Response(JSON.stringify(data), {
+  status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' },
+});
+export const secretOf = env => env.MEDIA_SECRET || 'guangying-cinema';
