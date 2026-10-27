@@ -10,7 +10,8 @@
     "start": "node extension.mjs",
     "test": "node tests/grouping.cjs && node tests/probe.cjs && node tests/worker-token.cjs",
     "deploy:worker": "wrangler deploy",
-    "deploy:pages": "node scripts/pages-entry.mjs && wrangler pages deploy web --project-name=guangying-cinema --branch=main"
+    "deploy:pages": "node scripts/sync-sources.mjs && node scripts/pages-entry.mjs && wrangler pages deploy web --project-name=guangying-cinema --branch=main",
+    "sync:sources": "node scripts/sync-sources.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.153.0"

@@ -1,0 +1,29 @@
+{
+  "api_site": {
+    "ys.cxkjg.cn": {
+      "name": "🎬创享资源",
+      "api": "https://ys.cxkjg.cn/api/provide/vod",
+      "detail": "https://ys.cxkjg.cn"
+    },
+    "cj.lziapi.com": {
+      "name": "🎬量子资源",
+      "api": "https://cj.lziapi.com/api.php/provide/vod",
+      "detail": "https://cj.lziapi.com"
+    },
+    "cj.ffzyapi.com": {
+      "name": "🎬非凡资源二线",
+      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
+      "detail": "https://cj.ffzyapi.com"
+    },
+    "jyzyapi.com": {
+      "name": "🎬金鹰资源",
+      "api": "https://jyzyapi.com/api.php/provide/vod",
+      "detail": "https://jyzyapi.com"
+    },
+    "360zy.main": {
+      "name": "🎬360资源(主域)",
+      "api": "https://360zy.com/api.php/provide/vod",
+      "detail": "https://360zy.com"
+    }
+  }
+}
