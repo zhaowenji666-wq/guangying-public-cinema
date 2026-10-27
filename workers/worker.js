@@ -4,9 +4,8 @@
 // - 视频分段使用 Cloudflare Cache API 缓存，跨 isolate 持久，命中即边缘直出、不回源
 // - 播放链接令牌改为无状态 HMAC 签名，isolate 重启后依然有效
 
-import sourceConfig from '../sources.json';
+import { sources } from '../functions/_sources.js';
 
-const sources = Object.entries(sourceConfig.api_site).map(([id, s]) => ({ id, name: s.name, api: s.api }));
 
 const PREFETCH = 12;
 const SEG_RE = /\.(ts|m4s|mp4|mp2t)(?:[?#]|$)/i;
