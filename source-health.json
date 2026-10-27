@@ -1,0 +1,141 @@
+{
+  "at": 1793110614725,
+  "sources": {
+    "iqiyizyapi.com": {
+      "name": "🎬-爱奇艺-",
+      "enabled": true,
+      "at": 1793087166056,
+      "ms": 4822,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "ikunzy.com": {
+      "name": "🎬iKun资源",
+      "enabled": true,
+      "at": 1793087178976,
+      "ms": 4432,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "dyttzyapi.com": {
+      "name": "🎬电影天堂",
+      "enabled": true,
+      "at": 1793087181922,
+      "ms": 2943,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "www.maoyanzy.com": {
+      "name": "🎬猫眼资源",
+      "enabled": true,
+      "at": 1793087188083,
+      "ms": 6159,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "360zy.com": {
+      "name": "🎬360 资源",
+      "enabled": true,
+      "at": 1793087199369,
+      "ms": 5593,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "jszyapi.com": {
+      "name": "🎬极速资源",
+      "enabled": true,
+      "at": 1793087202533,
+      "ms": 3162,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "www.moduzy.net": {
+      "name": "🎬魔都资源",
+      "enabled": true,
+      "at": 1793087206450,
+      "ms": 3915,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "ffzyapi.com": {
+      "name": "🎬非凡资源",
+      "enabled": true,
+      "at": 1793087210300,
+      "ms": 3847,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "zuida.xyz": {
+      "name": "🎬最大资源",
+      "enabled": true,
+      "at": 1793087223196,
+      "ms": 4645,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "www.subozy.com": {
+      "name": "🎬速播资源",
+      "enabled": true,
+      "at": 1793087238637,
+      "ms": 4962,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "jinyingzy.com": {
+      "name": "🎬金鹰点播",
+      "enabled": true,
+      "at": 1793087241543,
+      "ms": 2904,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "api.ukuapi88.com": {
+      "name": "🎬U酷影视",
+      "enabled": true,
+      "at": 1793087248770,
+      "ms": 5336,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "api.guangsuapi.com": {
+      "name": "🎬光速资源",
+      "enabled": true,
+      "at": 1793087253082,
+      "ms": 4310,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "www.hongniuzy.com": {
+      "name": "🎬红牛资源",
+      "enabled": true,
+      "at": 1793087255377,
+      "ms": 2293,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "caiji.moduapi.cc": {
+      "name": "🎬魔都动漫",
+      "enabled": true,
+      "at": 1793087259850,
+      "ms": 4470,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "www.ryzyw.com": {
+      "name": "🎬如意资源",
+      "enabled": true,
+      "at": 1793087263664,
+      "ms": 3813,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    },
+    "www.haohuazy.com": {
+      "name": "🎬豪华资源",
+      "enabled": true,
+      "at": 1793087266516,
+      "ms": 2851,
+      "mediaChecked": true,
+      "reason": "搜索、播放清单与首段读取通过"
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "cache_time": 7200,
+  "api_site": {
+    "iqiyizyapi.com": {
+      "name": "🎬-爱奇艺-",
+      "api": "https://iqiyizyapi.com/api.php/provide/vod",
+      "detail": "https://iqiyizyapi.com"
+    },
+    "ikunzy.com": {
+      "name": "🎬iKun资源",
+      "api": "https://ikunzyapi.com/api.php/provide/vod",
+      "detail": "https://ikunzy.com"
+    },
+    "dyttzyapi.com": {
+      "name": "🎬电影天堂",
+      "api": "http://caiji.dyttzyapi.com/api.php/provide/vod",
+      "detail": "http://caiji.dyttzyapi.com"
+    },
+    "www.maoyanzy.com": {
+      "name": "🎬猫眼资源",
+      "api": "https://api.maoyanapi.top/api.php/provide/vod",
+      "detail": "https://www.maoyanzy.com"
+    },
+    "360zy.com": {
+      "name": "🎬360 资源",
+      "api": "https://360zyzz.com/api.php/provide/vod",
+      "detail": "https://360zy.com"
+    },
+    "jszyapi.com": {
+      "name": "🎬极速资源",
+      "api": "https://jszyapi.com/api.php/provide/vod",
+      "detail": "https://jszyapi.com"
+    },
+    "www.moduzy.net": {
+      "name": "🎬魔都资源",
+      "api": "https://www.mdzyapi.com/api.php/provide/vod",
+      "detail": "https://www.moduzy.net"
+    },
+    "ffzyapi.com": {
+      "name": "🎬非凡资源",
+      "api": "https://api.ffzyapi.com/api.php/provide/vod",
+      "detail": "https://cj.ffzyapi.com"
+    },
+    "zuida.xyz": {
+      "name": "🎬最大资源",
+      "api": "https://api.zuidapi.com/api.php/provide/vod",
+      "detail": "https://zuida.xyz"
+    },
+    "www.subozy.com": {
+      "name": "🎬速播资源",
+      "api": "https://subocaiji.com/api.php/provide/vod",
+      "detail": "https://www.subozy.com"
+    },
+    "jinyingzy.com": {
+      "name": "🎬金鹰点播",
+      "api": "https://jyzyapi.com/provide/vod/from/jinyingyun/at/json",
+      "detail": "https://jinyingzy.com"
+    },
+    "api.ukuapi88.com": {
+      "name": "🎬U酷影视",
+      "api": "https://api.ukuapi88.com/api.php/provide/vod",
+      "detail": "https://www.ukuzy.com"
+    },
+    "api.guangsuapi.com": {
+      "name": "🎬光速资源",
+      "api": "https://api.guangsuapi.com/api.php/provide/vod",
+      "detail": "https://api.guangsuapi.com"
+    },
+    "www.hongniuzy.com": {
+      "name": "🎬红牛资源",
+      "api": "https://www.hongniuzy2.com/api.php/provide/vod",
+      "detail": "https://www.hongniuzy.com"
+    },
+    "caiji.moduapi.cc": {
+      "name": "🎬魔都动漫",
+      "api": "https://caiji.moduapi.cc/api.php/provide/vod",
+      "detail": "https://caiji.moduapi.cc"
+    },
+    "www.ryzyw.com": {
+      "name": "🎬如意资源",
+      "api": "https://cj.rycjapi.com/api.php/provide/vod",
+      "detail": "https://www.ryzyw.com"
+    },
+    "www.haohuazy.com": {
+      "name": "🎬豪华资源",
+      "api": "https://hhzyapi.com/api.php/provide/vod",
+      "detail": "https://www.haohuazy.com"
+    }
+  }
+}

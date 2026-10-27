@@ -1,0 +1,32 @@
+{
+  "platforms": [
+    {
+      "name": "CCTV",
+      "url": "http://tv.cctv.com/live/cctv5/"
+    },
+    {
+      "name": "爱奇艺",
+      "url": "https://www.iqiyi.com/"
+    },
+    {
+      "name": "腾讯视频",
+      "url": "https://v.qq.com/"
+    },
+    {
+      "name": "芒果",
+      "url": "https://www.mgtv.com/"
+    },
+    {
+      "name": "bilibili",
+      "url": "https://www.bilibili.com/"
+    },
+    {
+      "name": "1905",
+      "url": "https://vip.1905.com/"
+    },
+    {
+      "name": "西瓜视频",
+      "url": "https://www.ixigua.com/"
+    }
+  ]
+}

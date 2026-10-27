@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: guangying-public-cinema
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/extension
