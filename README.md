@@ -15,9 +15,29 @@
 
 ## 部署
 
-### Cloudflare Workers（已上线，实测最快且永久免费）
+### Cloudflare Pages（已上线，国内可用）
 
-**当前线上地址：https://guangying-cinema.wenjiworker8143.workers.dev**
+**当前线上地址：https://guangying-cinema-c1l.pages.dev**
+
+> 为什么用 Pages 而不是 Workers：`*.workers.dev` 在国内 DNS 被污染（本机与阿里公共 DNS
+> 223.5.5.5 都解析到 Facebook 段 `2a03:2880::face:b00c`，而非 Cloudflare IP），国内基本无法访问；
+> `*.pages.dev` 解析正常。Pages 的 Functions 与 Workers 是同一运行时，功能完全一致。
+
+实测对比（同一网络）：
+
+| 平台 | 延迟中位数 | 国内可用性 |
+| --- | --- | --- |
+| **Cloudflare Pages** | **98 ms** | 可用 |
+| Bonto | 433 ms | 可用 |
+| workers.dev | — | DNS 被污染，不可用 |
+
+部署：
+
+```bash
+npm run deploy:pages
+```
+
+（Workers 版 `npm run deploy:worker` 仍保留，但国内访问不了，仅作备用。）
 
 从你的网络实测对比：
 
