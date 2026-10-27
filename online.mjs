@@ -75,7 +75,7 @@ export function parseEpisodes(value){
  }
  return episodes;
 }
-function result(item,source){return {id:String(item.vod_id),title:plain(item.vod_name),actors:plain(item.vod_actor),director:plain(item.vod_director),genre:plain(item.vod_class||item.type_name),year:plain(item.vod_year).match(/\d{4}/)?.[0]||'',poster:register(item.vod_pic),remarks:plain(item.vod_remarks),description:plain(item.vod_content).slice(0,3000),source:source.id,sourceName:source.name,episodes:parseEpisodes(item.vod_play_url).map(e=>({title:e.title,url:register(e.url),hls:! /\.(mp4|webm|mkv)(?:[?#]|$)/i.test(e.url)}))};}
+function result(item,source){return {id:String(item.vod_id),title:plain(item.vod_name),actors:plain(item.vod_actor),director:plain(item.vod_director),genre:plain(item.vod_class||item.type_name),type:plain(item.type_name),year:plain(item.vod_year).match(/\d{4}/)?.[0]||'',poster:register(item.vod_pic),remarks:plain(item.vod_remarks),description:plain(item.vod_content).slice(0,3000),source:source.id,sourceName:source.name,episodes:parseEpisodes(item.vod_play_url).map(e=>({title:e.title,url:register(e.url),hls:! /\.(mp4|webm|mkv)(?:[?#]|$)/i.test(e.url)}))};}
 export async function query(source,params){
  const u=new URL(source.api);for(const [k,v] of Object.entries(params))u.searchParams.set(k,v);
  const {response}=await remote(u.href);const data=JSON.parse((await body(response,8*1024*1024)).toString());

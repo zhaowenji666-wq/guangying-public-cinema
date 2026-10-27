@@ -14,3 +14,86 @@
 .quick-actions{display:flex;gap:8px;padding:0 15px 15px}.quick-actions button{flex:1;border:1px solid #40593f;border-radius:7px;padding:8px;background:#23362a;color:#c9d9bf;font-size:16px;cursor:pointer}.quick-actions button[aria-pressed=true]{background:#37532e;color:#d9f5a8}.actor-filter-row{display:flex;align-items:center;gap:14px;margin:16px 0}.actor-filter-row input{max-width:340px;width:100%;background:#263a2c;border:1px solid #506c46;border-radius:8px;color:#e1efd3;font-size:18px;padding:10px 13px}.actor-filter-row span{color:#aabfa5;font-size:16px}#subtitle-offset{width:80px}
 
 #result-search{min-width:190px;flex:1;background:#23382b;border:1px solid #4d674c;border-radius:7px;color:#e2edd6;padding:11px 13px;font-size:17px}.episodes button small{display:block;font-size:14px;color:#a8bba0;margin-top:5px}.episodes button.selected small{color:#344a22}
+
+/* Layout tuned separately for desktop and touch-sized screens. */
+@media (min-width:761px){
+  main{max-width:1800px}
+  .online-library .grid{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))}
+  .online-filters{gap:12px}
+}
+@media (max-width:760px){
+  aside{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:12px 14px;overflow:visible}
+  aside .brand{grid-column:1/-1;margin:0 0 4px;font-size:24px}
+  aside .nav{display:flex;align-items:center;justify-content:center;gap:3px;width:100%;min-width:0;min-height:42px;padding:7px 3px;margin:0;font-size:14px;line-height:1.3;white-space:normal;text-align:center;background:#1d241e;border-radius:8px}
+  aside .nav small{float:none;font-size:12px}
+  aside .navlabel,aside .aside-bottom{display:none}
+  main{padding:0 14px}
+  main>header{display:none}
+  .online-hero{padding:24px 0 18px}
+  .online-hero .eyebrow{font-size:12px;letter-spacing:1.5px}
+  .online-hero h1{font-size:clamp(30px,8vw,40px);margin:10px 0;letter-spacing:0}
+  .online-hero p{margin:8px 0;line-height:1.55}
+  #online-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:16px}
+  #online-search .search{grid-column:1/-1;grid-row:1;width:100%;min-width:0;min-height:48px}
+  #online-search input{font-size:16px;min-width:0}
+  #search-kind{grid-column:1;width:100%;max-width:none;min-width:0;min-height:44px;font-size:16px}
+  #online-search .primary{grid-column:2;grid-row:2;min-height:44px;white-space:nowrap;padding:8px 18px}
+  #cancel-search:not([hidden]){grid-column:1/-1;min-height:40px}
+  .recent-row{margin-top:12px;gap:6px;font-size:14px}
+  .online-note{font-size:14px}
+  .online-library{padding-bottom:25px}
+  .section-head{align-items:center;gap:12px}
+  #source-settings{border:1px solid #42563f;border-radius:8px;padding:8px 10px;font-size:15px;white-space:nowrap}
+  .online-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px;margin:14px 0}
+  #result-search{grid-column:1/-1;width:100%;min-width:0;font-size:16px}
+  .online-filters select{width:100%;min-width:0;min-height:42px;font-size:15px}
+  .online-filters label{grid-column:1/-1;font-size:14px}
+  #online-clear-filters{justify-self:start;font-size:14px;padding:5px 0}
+  .online-library .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .online-card-info{padding:10px 10px 8px}
+  .online-card h3{font-size:16px;margin:0 0 4px;overflow-wrap:anywhere}
+  .online-card p{font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+  .online-cover span{padding:10px;font-size:18px;overflow-wrap:anywhere}
+  .quick-actions{gap:5px;padding:0 8px 9px}
+  .quick-actions button{min-width:0;min-height:40px;padding:5px 2px;font-size:13px}
+  .online-empty{padding:32px 14px;font-size:15px}
+  .online-results-head,#online-status,.source-details{font-size:14px}
+  .backup-tools{gap:8px;font-size:14px}
+  footer{flex-wrap:wrap;gap:6px;font-size:13px}
+  footer span{width:100%}
+  #online-player{width:100%;max-width:none;height:100dvh;max-height:100dvh;margin:0;padding:12px 12px max(16px,env(safe-area-inset-bottom));border:0;border-radius:0;overflow-y:auto}
+  #online-player .player-head{gap:10px;min-height:48px}
+  #online-player .player-head h2{font-size:19px;overflow-wrap:anywhere}
+  #online-player .player-head p{font-size:14px;margin:2px 0 8px}
+  #online-close,#sources-close,#platforms-close{min-width:44px;min-height:44px;font-size:22px}
+  #video-stage{aspect-ratio:16/9;display:flex;align-items:center}
+  #online-video{max-height:55vh}
+  #online-player .player-tools{display:flex;gap:7px;padding:12px 0}
+  #online-player .player-tools button,#online-player .player-tools select{font-size:14px;min-height:42px;max-width:100%}
+  #online-player .player-tools button{padding:7px 10px}
+  #online-source-select{width:100%}
+  #online-player .player-tools label{font-size:14px}
+  #online-player-status,.online-monitor{font-size:14px}
+  #online-player-status{margin:4px 0}
+  #online-description{font-size:14px}
+  #online-player .player-settings summary,#online-player .danmaku-settings summary{font-size:15px;line-height:1.5}
+  #sources-dialog,#platforms-dialog{width:calc(100% - 20px);max-width:none;max-height:90dvh;padding:16px}
+  #source-options label{font-size:15px}
+  .actor-filter-row{flex-wrap:wrap}
+}
+
+.result-kind{grid-column:1/-1;margin:14px 0 0;font-size:20px;color:#d5eb89}
+@media(max-width:760px){
+ .online-library .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+ .result-kind{margin:12px 0 2px;font-size:18px}
+ .online-card{display:flex;align-items:center;gap:4px;padding:4px 8px}
+ .online-card-open{flex:1;min-width:0}
+ .online-cover{display:none}
+ .online-card-info{padding:8px 4px}
+ .online-card h3{font-size:16px;line-height:1.35}
+ .online-card p{font-size:13px;margin:3px 0}
+ .online-card p:nth-of-type(2){display:none}
+ .quick-actions{flex:none;gap:4px;padding:0}
+ .quick-actions button{font-size:13px;padding:6px;min-height:40px}
+ .online-card>.card-remove{position:static;flex:none}
+}

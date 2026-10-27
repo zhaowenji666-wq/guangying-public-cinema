@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const s=fs.readFileSync('web/online.js','utf8').split('const $=')[0];
+const x=vm.runInNewContext(s+';({mediaKind,filmKey,groupMovies})');
+const m={title:'鹿鼎记',year:'1992',type:'喜剧片',remarks:'正片',source:'a',id:'1'};
+assert.equal(x.mediaKind(m),'film');
+assert.equal(x.mediaKind({...m,type:'国产剧',remarks:'第40集',episodes:[{},{}]}),'series');
+assert.equal(x.filmKey(m),x.filmKey({...m,title:'鹿鼎记国语1992',source:'b'}));
+const g=x.groupMovies([m,{...m,title:'鹿鼎记国语',source:'b'},{...m,type:'国产剧',remarks:'第40集',source:'c'}]);
+assert.equal(g.length,2);assert.equal(g[0].length,2);assert.equal(g[1].length,1);
+assert.notEqual(x.filmKey(m),x.filmKey({...m,year:'1983'}));
+console.log('classification and grouping passed');
