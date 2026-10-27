@@ -1,0 +1,28 @@
+# 定期体检采集源：失效源自动停用，保持搜索结果都能播放。
+# 采集源失效频繁，手动体检容易忘，所以每周自动跑一次并部署。
+#
+# 需要在仓库 Settings → Secrets 里配置：
+#   CLOUDFLARE_API_TOKEN  具备 Workers/Pages 编辑权限的 API Token
+name: source-audit
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'   # 每周一 11:17（北京时间）
+  workflow_dispatch:        # 也支持手动触发
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - name: Test
+        run: npm test
+      - name: Audit sources and deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run audit:sources

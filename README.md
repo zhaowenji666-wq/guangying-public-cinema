@@ -49,6 +49,25 @@ npm run audit:sources
 > 体检脚本必须探测**线上站点**而不是本机：Cloudflare 的网络与本机不同
 > （B 站、play.xluuss.com 都是本机通、Cloudflare 不通），只有线上探测才代表用户真实体验。
 
+### 自动体检（GitHub Actions）
+
+`.github/workflows/source-audit.yml` 每周一自动跑一次体检并部署，也支持手动触发。
+需要在仓库 Settings → Secrets and variables → Actions 里添加：
+
+- `CLOUDFLARE_API_TOKEN`：具备 Workers/Pages 编辑权限的 API Token
+  （在 https://dash.cloudflare.com/profile/api-tokens 创建）
+- `CLOUDFLARE_ACCOUNT_ID`：Account ID（Cloudflare 控制台右侧可见）
+
+### 测试
+
+```bash
+npm test
+```
+
+四项离线用例：分组去重（`grouping`）、线路探测容错（`probe`）、
+播放链接签名防篡改（`worker-token`）、**播放页还原（`rescue`）**。
+最后一项覆盖「能搜到但播不了」的核心修复，包括相对路径 m3u8 提取与脚本误伤。
+
 （Workers 版 `npm run deploy:worker` 仍保留，但国内访问不了，仅作备用。）
 
 从你的网络实测对比：
