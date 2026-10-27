@@ -1,0 +1,16 @@
+# 光影公开版 · Cloudflare Workers 部署配置
+# 部署前： npm i -g wrangler && wrangler login && npm run deploy:worker
+name = "guangying-cinema"
+main = "workers/worker.js"
+compatibility_date = "2026-01-01"
+
+# 前端静态文件由 Workers 静态资源托管，与 API 共用同一个域名
+[assets]
+directory = "./web"
+
+[observability]
+enabled = true
+
+[vars]
+# 播放链接签名密钥，部署前建议改成随机字符串
+MEDIA_SECRET = "guangying-cinema-change-me"

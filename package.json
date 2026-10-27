@@ -8,6 +8,10 @@
   },
   "scripts": {
     "start": "node extension.mjs",
-    "test": "node tests/grouping.cjs && node tests/probe.cjs"
+    "test": "node tests/grouping.cjs && node tests/probe.cjs && node tests/worker-token.cjs",
+    "deploy:worker": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
   }
 }
