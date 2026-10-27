@@ -40,7 +40,7 @@ const segCache=new Map();      // 分段 URL -> {buf, type, at}
 const segInflight=new Map();   // 分段 URL -> Promise（去重，避免重复请求）
 const playlistCache=new Map(); // 子播放列表 URL -> {text, at}
 let segCacheBytes=0;
-const SEG_TTL=6*3600000, SEG_MAX_BYTES=220*1024*1024, PREFETCH=6;
+const SEG_TTL=6*3600000, SEG_MAX_BYTES=220*1024*1024, PREFETCH=12;
 function segGet(url){const e=segCache.get(url);if(!e)return null;if(Date.now()-e.at>SEG_TTL){segCache.delete(url);segCacheBytes-=e.buf.length;return null;}e.at=Date.now();return e;}
 function segPut(url,buf,type){const old=segCache.get(url);if(old)segCacheBytes-=old.buf.length;if(segCacheBytes+buf.length>SEG_MAX_BYTES){for(const [k,v] of segCache){if(segCacheBytes+buf.length<=SEG_MAX_BYTES)break;segCache.delete(k);segCacheBytes-=v.buf.length;}}segCache.set(url,{buf,type,at:Date.now()});segCacheBytes+=buf.length;}
 async function fetchSeg(url){

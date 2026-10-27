@@ -208,7 +208,7 @@ async function openMovie(movie,transfer=null){
 }
 function playEpisode(index,time=0,fromStart=false){
  if(!current?.episodes[index])return;stop();episode=index;const version=playVersion,video=$('#online-video');renderEpisodes();const url=current.episodes[index].url;pendingPlayback={episode:index,episodeTitle:current.episodes[index].title,time};playerStatus('正在连接 '+current.sourceName+' · '+current.episodes[index].title);
- warmSegments(url,4);
+ warmSegments(url,12);
  resetPlayerPlus();
  const loaded=()=>{if(version!==playVersion)return;const seek=fromStart?0:(time||Number(plusPrefs.skipIntro)||0);if(seek>0&&Number.isFinite(video.duration))video.currentTime=Math.min(seek,Math.max(0,video.duration-2));if(typeof plusPrefs.volume==='number')video.volume=Math.max(0,Math.min(1,plusPrefs.volume));if(plusPrefs.muted)video.muted=true;video.playbackRate=Number($('#online-speed').value);video.play().catch(()=>playerStatus('已就绪，请点击播放器中的播放按钮。'));};
  video.onloadedmetadata=loaded;
@@ -252,7 +252,7 @@ async function fastestSource(group,episodeTitle='',episodeIndex=0){
 }
 // 源站单连接限速明显，起播前用多条并发连接把开头的分段先拉进浏览器缓存，
 // 后续 hls.js 命中 HTTP 缓存即秒取，避免起播时干等一两段。
-async function warmSegments(playlistUrl,count=4){
+async function warmSegments(playlistUrl,count=12){
  try{
   const seen=new Map();
   let url=playlistUrl;

@@ -15,7 +15,9 @@
 
 ## 部署
 
-### Cloudflare Workers（推荐，实测最快且永久免费）
+### Cloudflare Workers（已上线，实测最快且永久免费）
+
+**当前线上地址：https://guangying-cinema.wenjiworker8143.workers.dev**
 
 从你的网络实测对比：
 

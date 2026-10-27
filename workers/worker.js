@@ -8,7 +8,7 @@ import sourceConfig from '../sources.json';
 
 const sources = Object.entries(sourceConfig.api_site).map(([id, s]) => ({ id, name: s.name, api: s.api }));
 
-const PREFETCH = 6;
+const PREFETCH = 12;
 const SEG_RE = /\.(ts|m4s|mp4|mp2t)(?:[?#]|$)/i;
 const enc = new TextEncoder();
 
@@ -102,15 +102,20 @@ async function rewritePlaylist(secret, text, baseUrl) {
 async function cachedFetch(url, ctx) {
   const req = new Request(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
   const cache = caches.default;
-  try { const hit = await cache.match(req); if (hit) return hit; } catch {}
+  try { const hit = await cache.match(req); if (hit) { const h = new Headers(hit.headers); h.set('X-Cache', 'HIT'); return new Response(hit.body, { status: hit.status, headers: h }); } } catch {}
   const resp = await fetch(req, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+  const headers = new Headers(resp.headers);
+  headers.set('Cache-Control', 'public, max-age=21600');
+  let stored = 'PUT-FAILED';
   if (resp.ok) {
     const clone = resp.clone();
-    const headers = new Headers(clone.headers);
-    headers.set('Cache-Control', 'public, max-age=21600');
-    try { ctx.waitUntil(cache.put(req, new Response(clone.body, { headers }))); } catch {}
-  }
-  return resp;
+    try {
+      await cache.put(req, new Response(clone.body, { headers: new Headers(headers) }));
+      stored = 'MISS-STORED';
+    } catch (e) { stored = 'MISS-PUTERR:' + (e && e.message ? e.message.slice(0, 40) : 'unknown'); }
+  } else { stored = 'MISS-UPSTREAM-' + resp.status; }
+  headers.set('X-Cache', stored);
+  return new Response(resp.body, { status: resp.status, headers });
 }
 
 // 响应播放列表时后台并发预取开头几段：源站单连接限速，靠并发把叠加带宽吃满。
