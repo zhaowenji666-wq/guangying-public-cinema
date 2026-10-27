@@ -4,13 +4,15 @@ name = "guangying-cinema"
 main = "workers/worker.js"
 compatibility_date = "2026-01-01"
 
-# 前端静态文件由 Workers 静态资源托管，与 API 共用同一个域名
+# 前端静态文件由 Workers 静态资源托管，与 API 共用同一个域名。
+# 用 binding 让 Worker 自己控制分发，这样可以把 / 映射到 online.html。
 [assets]
 directory = "./web"
+binding = "ASSETS"
 
 [observability]
 enabled = true
 
 [vars]
 # 播放链接签名密钥，部署前建议改成随机字符串
-MEDIA_SECRET = "guangying-cinema-change-me"
+MEDIA_SECRET = "901f9a5212d33ec57d8f9ee48048334876c0dddf6b238df2"

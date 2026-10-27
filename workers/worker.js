@@ -190,6 +190,11 @@ export default {
     } catch (e) {
       return json({ error: e.message }, 502);
     }
+    // 其余请求交给静态资源：把 / 与 /online 映射到 online.html（与 Node 版一致）
+    if (env.ASSETS) {
+      const path = (url.pathname === '/' || url.pathname === '/online') ? '/online.html' : url.pathname;
+      return env.ASSETS.fetch(new Request(new URL(path, url.origin), request));
+    }
     return new Response('Not Found', { status: 404 });
   },
 };
