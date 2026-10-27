@@ -186,6 +186,8 @@ export default {
           headers: { 'User-Agent': 'Mozilla/5.0', ...(range ? { Range: range } : {}) },
         });
         const type = String(r.headers.get('content-type') || '');
+        // 部分失效片源会返回 HTML 页面而不是视频，直接转发会让播放器拿到一堆网页代码。
+        if (/text\/html/i.test(type) && !/mpegurl/i.test(type)) throw Error('片源返回页面而非视频，请换一个片源');
         if (/mpegurl/i.test(type) || /\.m3u8(?:[?#]|$)/i.test(target)) {
           const text = await r.text();
           if (!text.trimStart().startsWith('#EXTM3U')) throw Error('播放列表格式无效');
