@@ -7,3 +7,6 @@ node_modules/
 
 # 由 scripts/pages-entry.mjs 生成
 web/index.html
+
+# 由 scripts/audit-live.mjs 生成
+live-report.json

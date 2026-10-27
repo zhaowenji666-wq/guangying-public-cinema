@@ -8,10 +8,34 @@
 
 ## 测试
 
-`npm test` 会运行两项不依赖网络的检查：
+`npm test` 会运行五项不依赖网络的检查：
 
 - `tests/grouping.cjs`：影片与剧集的类型判定、标题归一化（去掉“国语/粤语”与年份后缀）、按「标题＋年份＋类型」合并。
 - `tests/probe.cjs`：线路探测在详情缺失、线路不可用、剧集对不上时的失败处理，以及多线路并发择优。
+- `tests/worker-token.cjs`：播放链接 HMAC 签名防篡改与过期。
+- `tests/rescue.cjs`：采集站返回播放页时还原真实 m3u8（含相对路径）。
+- `tests/live.cjs`：直播频道清单结构（必须 https、无重名、分组合法、生成模块与源文件一致）。
+
+## 电视直播
+
+`/live` 是独立的直播页，频道清单来自开源项目 [iptv-org/iptv](https://github.com/iptv-org/iptv) 的
+`streams/cn.m3u`（511 个中文频道），经逐条实测筛选后保留 61 个。
+
+筛选标准（缺一不可）：
+
+1. 播放清单可取，且首个分片能读到；
+2. 响应带 CORS，浏览器可以直接播放；
+3. **支持 HTTPS** —— 站点是 https，http 源会被浏览器按混合内容拦截；
+4. 分片是可解码的 MPEG-TS（`0x47` 同步字节）或 fMP4，剔除 `ARCVIDEO-PROTECTED` 一类的私有加密频道。
+
+播放完全在浏览器直连源站，不经过本站代理，因此不占用 Functions 每日请求额度。
+
+```bash
+npm run sync:live     # live-sources.json -> web/live-channels.js
+npm run audit:live    # 逐条体检，结果写入 live-report.json（只报告，不自动删减）
+```
+
+体检只报告不自动删改：直播源抖动频繁，自动删减容易把能用的频道误杀。
 
 ## 部署
 
@@ -65,8 +89,8 @@ npm test
 ```
 
 四项离线用例：分组去重（`grouping`）、线路探测容错（`probe`）、
-播放链接签名防篡改（`worker-token`）、**播放页还原（`rescue`）**。
-最后一项覆盖「能搜到但播不了」的核心修复，包括相对路径 m3u8 提取与脚本误伤。
+播放链接签名防篡改（`worker-token`）、**播放页还原（`rescue`）**、直播清单结构（`live`）。
+`rescue` 覆盖「能搜到但播不了」的核心修复，包括相对路径 m3u8 提取与脚本误伤。
 
 （Workers 版 `npm run deploy:worker` 仍保留，但国内访问不了，仅作备用。）
 

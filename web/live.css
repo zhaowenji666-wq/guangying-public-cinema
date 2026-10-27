@@ -1,0 +1,36 @@
+#live-search{display:flex;gap:12px;max-width:880px;margin-top:25px;align-items:stretch}
+#live-search .search{flex:1;width:auto;min-width:0}
+#live-search input{width:100%;font-size:19px;min-width:0}
+#live-search button{white-space:nowrap;padding:12px 20px;border-radius:8px;border:1px solid #3b5030;color:#c8dbb4;font-size:17px}
+#live-search .primary{background:#c8ed74;color:#1e2a14;border-color:#c8ed74;font-weight:650}
+.live-group-bar{display:flex;flex-wrap:wrap;gap:9px;margin:22px 0 10px}
+.live-group-bar button{padding:9px 15px;border:1px solid #35462f;border-radius:20px;background:#1b2519;color:#bccdb1;font-size:16px}
+.live-group-bar button.on{background:#c8ed74;color:#1b2a12;border-color:#c8ed74;font-weight:650}
+.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:14px;margin:18px 0 40px}
+.live-card{display:flex;flex-direction:column;gap:8px;padding:16px 15px;border:1px solid #2b3a2e;border-radius:12px;background:#16211a;text-align:left;color:#e6efe2;transition:border-color .15s,transform .15s;min-height:92px;min-width:0;overflow:hidden}
+.live-card:hover,.live-card:focus-visible{border-color:#c8ed74;transform:translateY(-2px)}
+.live-card b{font-size:19px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.live-card small{font-size:14px;color:#9db3a0;overflow-wrap:anywhere;word-break:break-all}
+.live-card .live-badge{align-self:flex-start;font-size:12px;color:#cfe6a9;border:1px solid #4a6640;border-radius:10px;padding:1px 8px}
+.live-card.playing{border-color:#c8ed74;background:#22301c}
+#live-stage{position:relative;background:#000;width:100%}
+#live-stage video{display:block;width:100%;max-height:62vh;background:#000}
+#live-stage:fullscreen video{height:100vh;max-height:100vh;object-fit:contain}
+#live-player{width:min(1150px,94vw);max-height:94vh;background:#111a15;color:#eef4ef;border:1px solid #344a39;border-radius:18px;padding:24px}
+.live-help{background:#17261c;border:1px solid #304a37;border-radius:9px;padding:14px 17px;margin:14px 0}
+.live-help summary{cursor:pointer;color:#d3e4c8;font-size:17px}
+.live-help p{font-size:15px;line-height:1.7;color:#a9bdab}
+#live-count{font-size:15px;color:#a9bba4}
+.live-fav-on{color:#c8ed74;border-color:#7f9854!important;background:#303d22!important}
+@media(max-width:760px){
+  #live-search{flex-wrap:wrap;margin-top:16px;gap:8px}
+  #live-search .search{flex-basis:100%;min-height:48px}
+  #live-search input{font-size:16px}
+  #live-search button{flex:1;padding:10px 12px;font-size:16px;min-height:44px}
+  .live-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),1fr));gap:10px}
+  .live-card{padding:12px 11px;min-height:80px}
+  .live-card b{font-size:16px}
+  .live-card small{font-size:13px}
+  #live-player{padding:14px}
+  .live-group-bar button{padding:7px 12px;font-size:15px}
+}
