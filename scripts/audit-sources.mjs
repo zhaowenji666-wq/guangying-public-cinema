@@ -60,11 +60,16 @@ const ids = Object.keys(all);
 const results = {};
 // 并发 4，避免一次打太多请求把站点压垮
 let cursor = 0;
-await Promise.all(Array.from({ length: 4 }, async () => {
+await Promise.all(Array.from({ length: 2 }, async () => {
   while (cursor < ids.length) {
     const id = ids[cursor++];
-    results[id] = await check(id, all[id]);
-    const r = results[id];
+    // 上游抖动明显，失败的源再测一次，避免把可用源误判为坏源
+    let r = await check(id, all[id]);
+    if (!r.enabled) {
+      const again = await check(id, all[id]);
+      if (again.enabled) r = again;
+    }
+    results[id] = r;
     console.log(`${r.enabled ? '✓' : '✗'} ${sourceName(r.name).padEnd(18)} ${String(r.ms).padStart(6)}ms  ${r.reason}`);
   }
 }));
