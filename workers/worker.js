@@ -151,6 +151,12 @@ export default {
       if (url.pathname === '/api/extension') return json({ ok: true, version: 3, runtime: 'workers' });
       if (url.pathname === '/api/online/sources')
         return json({ sources: sources.map(({ id, name }) => ({ id, name })), project: 'LunaTV-config + DecoTV' });
+      // 前端只启用 enabled===true 的片源，缺少这个接口会被过滤成空列表，导致搜不到任何影片。
+      // 边缘侧不做定时探测，全部标记为可用，由搜索/播放时的自动换线兜底。
+      if (url.pathname === '/api/source-health')
+        return json({ at: Date.now(), auditing: false, disabled: 0, sources: Object.fromEntries(sources.map(s => [s.id, { name: s.name, enabled: true }])) });
+      if (url.pathname === '/api/source-health/recheck')
+        return json({ error: '在线版暂不支持公开触发检测' }, 405);
 
       if (['/api/online/search', '/api/online/detail'].includes(url.pathname)) {
         const source = sources.find(s => s.id === url.searchParams.get('source'));
