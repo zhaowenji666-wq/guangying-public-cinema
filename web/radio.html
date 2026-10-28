@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#132018">
+  <title>音乐与电台 · 光影</title>
+  <link rel="stylesheet" href="/style.css?v=08e60023">
+  <link rel="stylesheet" href="/radio.css?v=c35c744e">
+  <style>body{overflow-x:hidden}.music-info small{overflow:hidden;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}</style>
+</head>
+<body>
+<main class="radio">
+  <nav class="radio-nav" aria-label="主导航"><a class="brand" href="/">◈ <span>光影<small>PERSONAL CINEMA</small></span></a><span></span><a href="/online">影视</a><a href="/live">直播</a></nav>
+  <section class="radio-hero">
+    <p class="eyebrow">OPEN MUSIC & RADIO</p>
+    <h1>音乐，也有自己的放映厅。</h1>
+    <p>公开授权音乐与全球网络电台，一个页面直接搜索、收藏和播放。</p>
+    <div class="source-tabs" role="tablist" aria-label="音乐来源">
+      <button type="button" data-mode="radio" class="active" role="tab">电台</button>
+      <button type="button" data-mode="songs" role="tab">歌曲搜索</button>
+      <button type="button" data-mode="commons" role="tab">公开音乐</button>
+      <button type="button" data-mode="favorites" role="tab">♡ 收藏 <small id="favorite-count">0</small></button>
+    </div>
+    <form id="search" autocomplete="off">
+      <label><span>⌕</span><input id="query" aria-label="搜索音乐或电台" maxlength="60" placeholder="搜索电台、歌手或音乐类型" required></label>
+      <button type="submit">搜索</button>
+      <button type="button" id="china">中国电台</button>
+      <button type="button" id="back" hidden>← 返回结果</button>
+    </form>
+    <div id="presets" class="presets"><button data-query="流行">流行</button><button data-query="古典">古典</button><button data-query="爵士">爵士</button><button data-query="轻音乐">轻音乐</button></div>
+  </section>
+
+  <section class="music-library">
+    <div class="section-title"><div><p class="eyebrow" id="source-label">LIVE RADIO</p><h2 id="result-title">精选电台</h2></div><span id="result-count"></span></div>
+    <p id="status" role="status">正在加载电台…</p>
+    <div id="stations" class="music-list"></div>
+  </section>
+
+  <section class="player-dock" aria-label="音乐播放器">
+    <div><small>正在播放</small><strong id="now">尚未选择</strong><span id="now-meta"></span></div>
+    <audio id="player" controls preload="none"></audio>
+    <button id="favorite-current" type="button" disabled>♡ 收藏</button>
+  </section>
+
+  <footer>音乐目录：<a href="https://music.apple.com/" target="_blank" rel="noopener">Apple Music 试听</a> · <a href="https://github.com/guohuiyuan/go-music-api" target="_blank" rel="noopener">go-music-api / music-lib</a> · <a href="https://www.radio-browser.info/" target="_blank" rel="noopener">Radio Browser</a> · <a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a><span>音乐可用性与版权状态以来源平台为准</span></footer>
+</main>
+<script src="/radio.js?v=2119071e"></script>
+</body>
+</html>

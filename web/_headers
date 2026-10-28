@@ -1,0 +1,16 @@
+# Cloudflare Pages 静态资源响应头。
+# 页面 HTML 不缓存（保持默认），保证用户总能拿到最新的 ?v= 版本号；
+# 带 ?v= 的 JS/CSS 用内容指纹做一年期不可变缓存 —— 改代码必须重新部署，
+# 重新部署会清边缘缓存，同时构建脚本会把 ?v= 换成新的内容 hash，用户端自然刷新。
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+/*.png
+  Cache-Control: public, max-age=604800
+/*.svg
+  Cache-Control: public, max-age=604800
+/*.ico
+  Cache-Control: public, max-age=604800

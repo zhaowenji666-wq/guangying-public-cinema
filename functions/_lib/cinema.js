@@ -5,7 +5,6 @@ import { sources } from '../_sources.js';
 
 export { sources };
 
-const PREFETCH = 12;
 const SEG_RE = /\.(ts|m4s|mp4|mp2t)(?:[?#]|$)/i;
 const enc = new TextEncoder();
 
@@ -89,8 +88,9 @@ export async function query(secret, source, params) {
   const data = await r.json();
   if (!Array.isArray(data.list)) throw Error('片源未返回影片列表');
   const norm = s => plain(s).toLowerCase().replace(/\s/g, '');
+  const unsafe = /成人|伦理|情色|色情|无码|有码|成人视频|AV女优|福利姬|写真|里番|三级(?:片|电影)|限制级/i;
   const list = data.list.filter(m => m.vod_id && m.vod_name &&
-    !/成人版|伦理片|色情|情色|AV女优/.test(m.vod_name + ' ' + (m.type_name || '')) &&
+    !unsafe.test([m.vod_name, m.type_name, m.vod_class].filter(Boolean).join(' ')) &&
     (!params.wd || norm([m.vod_name, m.vod_actor, m.vod_director].filter(Boolean).join(' ')).includes(norm(params.wd))));
   return await Promise.all(list.slice(0, 60).map(m => makeResult(secret, m, source)));
 }
@@ -121,30 +121,6 @@ export async function rewritePlaylist(secret, text, baseUrl) {
     out.push(await register(secret, new URL(line.trim(), baseUrl).href));
   }
   return out.join('\n');
-}
-
-// 源站对单连接限速，靠并发预取把叠加带宽吃满。
-// text 由调用方传入（它已经取过一次清单），避免同一份清单被重复抓取。
-export function prefetchSegments(playlistUrl, waitUntil, text = '') {
-  waitUntil((async () => {
-    try {
-      let cur = playlistUrl, body = text;
-      for (let depth = 0; depth < 3; depth++) {
-        if (!body) {
-          const r = await fetch(cur, { headers: mediaHeaders() });
-          if (!r.ok) return;
-          body = await r.text();
-        }
-        const lines = body.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
-        const variant = lines.find(x => !x.startsWith('#') && !SEG_RE.test(x));
-        if (variant) { cur = new URL(variant, cur).href; body = ''; continue; }
-        const segs = lines.filter(x => !x.startsWith('#') && SEG_RE.test(x))
-          .slice(0, PREFETCH).map(s => new URL(s, cur).href);
-        await Promise.allSettled(segs.map(u => fetch(u, { headers: mediaHeaders() }).then(r => r.arrayBuffer())));
-        return;
-      }
-    } catch {}
-  })());
 }
 
 export const isSegment = url => SEG_RE.test(url);

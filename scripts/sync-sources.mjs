@@ -11,7 +11,7 @@ try { custom = JSON.parse(fs.readFileSync(path.join(base, 'sources.custom.json')
 
 const merged = { ...main };
 Object.assign(merged, custom);
-const arr = Object.entries(merged).map(([id, s]) => ({ id, name: s.name, api: s.api }));
+const arr = Object.entries(merged).filter(([, s]) => !s.adult).map(([id, s]) => ({ id, name: s.name, api: s.api }));
 
 fs.writeFileSync(
   path.join(base, 'functions', '_sources.js'),

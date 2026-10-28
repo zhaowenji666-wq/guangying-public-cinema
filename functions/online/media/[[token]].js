@@ -1,4 +1,4 @@
-import { resolve, rewritePlaylist, prefetchSegments, json, secretOf, UA, mediaHeaders } from '../../_lib/cinema.js';
+import { resolve, rewritePlaylist, json, secretOf, UA, mediaHeaders } from '../../_lib/cinema.js';
 import { rescuePlaylist } from '../../_lib/rescue.js';
 
 // 这些状态码多半是防盗链/UA 校验，值得换一套头再试一次。
@@ -24,7 +24,7 @@ async function pull(target, range) {
 }
 
 export async function onRequest(context) {
-  const { request, env, params, waitUntil } = context;
+  const { request, env, params } = context;
   const secret = secretOf(env);
   const token = (params.token || []).join('/');
   const target = await resolve(secret, token);
@@ -44,10 +44,6 @@ export async function onRequest(context) {
     if (/mpegurl/i.test(type) || /\.m3u8(?:[?#]|$)/i.test(target)) {
       const text = await r.text();
       if (!text.trimStart().startsWith('#EXTM3U')) throw Error('播放列表格式无效');
-      // 只对真正的分片清单预取。主清单（#EXT-X-STREAM-INF）本身没有分片，
-      // 在这里预取会额外多抓一层清单 + 12 个分片，一次播放请求向上游打十几个请求，
-      // 很容易把源站打成限流，反而让紧随其后的请求失败。客户端马上就会自己请求子清单。
-      if (!/#EXT-X-STREAM-INF/.test(text)) prefetchSegments(r.url || target, waitUntil, text);
       return new Response(await rewritePlaylist(secret, text, r.url || target), {
         headers: { 'Content-Type': 'application/vnd.apple.mpegurl', 'Cache-Control': 'no-store' },
       });

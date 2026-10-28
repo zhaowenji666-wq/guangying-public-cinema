@@ -8,4 +8,9 @@ assert.equal(x.filmKey(m),x.filmKey({...m,title:'鹿鼎记国语1992',source:'b'
 const g=x.groupMovies([m,{...m,title:'鹿鼎记国语',source:'b'},{...m,type:'国产剧',remarks:'第40集',source:'c'}]);
 assert.equal(g.length,2);assert.equal(g[0].length,2);assert.equal(g[1].length,1);
 assert.notEqual(x.filmKey(m),x.filmKey({...m,year:'1983'}));
+const tv={...m,year:'1998',type:'国产剧',remarks:'第45集',actors:'陈小春,马浚伟'};
+assert.equal(x.filmKey(tv),x.filmKey({...tv,title:'鹿鼎记 陈小春版 普通话',source:'b'}));
+assert.equal(x.filmKey(tv),x.filmKey({...tv,title:'鹿鼎记[普通话版]',source:'c'}));
+assert.equal(x.filmKey(tv),x.filmKey({...tv,title:'鹿鼎记1998粤语',source:'d'}));
+assert.notEqual(x.filmKey(tv),x.filmKey({...tv,title:'鹿鼎记2：神龙教'}));
 console.log('classification and grouping passed');

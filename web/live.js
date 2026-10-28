@@ -26,8 +26,26 @@
   let current = null;
   let hls = null;
   let retried = false;
+  let attachSeq = 0;
 
   const video = $('live-video');
+
+  // hls.min.js 约 520KB，不在首屏加载：真正点开频道时才注入 <script>。
+  // 加载结果缓存成 Promise，反复换台不会重复插入；地址来自 <body data-hls-src>，
+  // 版本号由构建脚本自动写入，保证长缓存下也能随部署刷新。
+  let hlsLoading = null;
+  function loadHls() {
+    if (window.Hls && window.Hls.isSupported()) return Promise.resolve();
+    if (hlsLoading) return hlsLoading;
+    hlsLoading = new Promise((resolve, reject) => {
+      const tag = document.createElement('script');
+      tag.src = document.body.dataset.hlsSrc || '/hls.min.js';
+      tag.onload = () => (window.Hls && window.Hls.isSupported()) ? resolve() : reject(new Error('播放器组件不可用'));
+      tag.onerror = () => { hlsLoading = null; reject(new Error('播放器组件加载失败，请刷新重试')); };
+      document.head.append(tag);
+    });
+    return hlsLoading;
+  }
   const dialog = $('live-player');
   const playTitle = $('live-play-title');
   const playInfo = $('live-play-info');
@@ -122,11 +140,25 @@
   function setState(text) { playStatus.textContent = text; }
   function setBuffer(text) { bufferEl.textContent = text; }
 
-  function attach(src) {
+  async function attach(src) {
+    // 序号守卫：等待播放器组件下载期间用户可能已经换了台，
+    // 旧的等待者必须在这里退出，否则会用旧频道创建第二个 hls 实例。
+    const seq = ++attachSeq;
     destroy();
     retried = false;
     setBuffer('连接中');
 
+    if (!(window.Hls && window.Hls.isSupported())) {
+      // hls.min.js 约 520KB，不在首屏加载：真正点开频道时才注入，
+      // 失败则回退到浏览器原生 HLS（Safari 可直接播）。
+      try {
+        setState('正在加载播放器组件…');
+        await loadHls();
+      } catch (e) {
+        setState(e.message + '，尝试系统原生播放。');
+      }
+    }
+    if (seq !== attachSeq) return;
     if (window.Hls && window.Hls.isSupported()) {
       hls = new window.Hls({
         lowLatencyMode: false,

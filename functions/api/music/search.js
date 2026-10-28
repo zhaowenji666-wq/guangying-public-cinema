@@ -1,4 +1,4 @@
-import { musicSearch } from '../../_lib/music.js';
+import { previewSearch } from '../../_lib/music.js';
 import { json } from '../../_lib/cinema.js';
 
 export async function onRequest(context) {
@@ -6,8 +6,8 @@ export async function onRequest(context) {
   const q = (url.searchParams.get('q') || '').trim().slice(0, 60);
   if (!q) return json({ error: '请输入歌曲或歌手名' }, 400);
   try {
-    const list = await musicSearch(q, Number(url.searchParams.get('page')) || 1);
-    return json({ results: list, source: 'bilibili' });
+    const list = await previewSearch(q);
+    return json({ results: list, source: 'apple-preview' });
   } catch (e) {
     return json({ error: e.message, results: [] }, 502);
   }

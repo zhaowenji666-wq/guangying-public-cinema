@@ -113,8 +113,9 @@ async function check(id, source) {
   const rec = { name: source.name, enabled: false, ms: 0, reason: '' };
   const started = Date.now();
   try {
+    const searchQuery = source.auditQuery || QUERY;
     const j = await withTimeout(signal =>
-      fetch(`${SITE}/api/online/search?source=${encodeURIComponent(id)}&q=${encodeURIComponent(QUERY)}`, { signal })
+      fetch(`${SITE}/api/online/search?source=${encodeURIComponent(id)}&q=${encodeURIComponent(searchQuery)}`, { signal })
         .then(r => r.json()), TIMEOUT);
     if (!j.results?.length) { rec.reason = '搜索无结果'; rec.ms = Date.now() - started; return rec; }
 
