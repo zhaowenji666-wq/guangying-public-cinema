@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>在线影视 · 光影</title>
     <link rel="stylesheet" href="/style.css?v=08e60023" />
-    <link rel="stylesheet" href="/online.css?v=107c81f5" />
+    <link rel="stylesheet" href="/online.css?v=84126c8d" />
   </head>
   <body data-hls-src="/hls.min.js?v=e3a349d9">
     <aside>
@@ -234,10 +234,10 @@
         ><details class="more-tools"><summary aria-label="更多设置">更多</summary>
           <div class="more-panel">
             <button id="switch-line">换一条播放线路</button>
+            <button id="magnet-open">磁力播放</button>
             <button id="online-watchlist">＋ 加入待看</button>
             <button id="online-watched">标记已看完</button>
             <button id="online-restart">本集从头看</button>
-            <button id="watermark-edit">遮挡画面广告</button>
             <button id="player-pip">画中画</button>
             <button id="player-screenshot">保存画面截图</button>
             <button id="retry-online">重新加载本集</button>
@@ -406,6 +406,40 @@
       </div>
       <div id="episodes" class="episodes"></div>
     </dialog>
+    <dialog id="magnet-dialog">
+      <div class="player-head">
+        <div>
+          <h2>磁力播放</h2>
+          <p>通过你自己的服务器把磁力链接转成可播的流。仅供自有版权或授权内容使用。</p>
+        </div>
+        <button id="magnet-close" aria-label="关闭磁力播放">✕</button>
+      </div>
+      <form id="magnet-form" class="magnet-form">
+        <label>本机增强服务地址
+          <input id="magnet-server" placeholder="http://localhost:3000" autocomplete="off" />
+        </label>
+        <label>磁力链接（添加到 115 离线）
+          <input id="magnet-uri" placeholder="magnet:?xt=urn:btih:…" autocomplete="off" required />
+        </label>
+        <label>保存目录（115 内路径）
+          <input id="magnet-dir" placeholder="/01-电影/待分类" autocomplete="off" />
+        </label>
+        <button type="submit" class="primary">添加到 115 离线</button>
+      </form>
+      <p id="magnet-status" role="status">磁力会通过本机 CloudDrive2 添加到 115 离线；完成后点「查看离线文件」即可播放。热门资源通常秒完成。</p>
+      <div class="magnet-actions"><button type="button" id="magnet-browse">查看离线文件</button></div>
+      <div id="magnet-files" class="magnet-files"></div>
+    </dialog>
+    <dialog id="magnet-player">
+      <div class="player-head">
+        <div>
+          <h2 id="magnet-play-title">磁力播放</h2>
+          <p id="magnet-play-info"></p>
+        </div>
+        <button id="magnet-player-close" aria-label="关闭磁力播放器">✕</button>
+      </div>
+      <video id="magnet-video" controls playsinline preload="auto"></video>
+    </dialog>
     <dialog id="platforms-dialog">
       <div class="player-head">
         <h2>VipVideo · 平台聚合</h2>
@@ -443,6 +477,6 @@
       <span id="update-message"></span
       ><button id="apply-update">应用更新</button>
     </div>
-    <script src="/online.js?v=bb446bfe"></script>
+    <script src="/online.js?v=70d64b65"></script>
   </body>
 </html>

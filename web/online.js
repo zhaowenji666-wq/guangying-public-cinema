@@ -1,4 +1,4 @@
-const CINEMA_BUILD='20261028191311904';
+const CINEMA_BUILD='20261028195420103';
 const movieKey=m=>m.source+':'+m.id;
 function mediaKind(m){
  const type=String(m.type||''), text=type+' '+String(m.remarks||'');
@@ -337,7 +337,7 @@ $('#source-quality').onchange=chooseSourceQuality;
 $('#online-grid').onclick=e=>{const quick=e.target.closest('[data-quick]');if(quick){quickOrganize(quick.dataset.quick,Number(quick.dataset.index));return;}const remove=e.target.closest('[data-remove]');if(remove){removeEntry(Number(remove.dataset.remove));return;}const button=e.target.closest('[data-card]');if(button)openBest(cards[Number(button.dataset.card)]);};
 $('#episodes').onclick=e=>{const button=e.target.closest('[data-episode]');if(button){const index=Number(button.dataset.episode);playEpisode(index,episodePosition(index));}};
 $('#online-close').onclick=()=>$('#online-player').close();
-$('#online-player').addEventListener('close',()=>{probeVersion++;clearTimeout(stallTimer);stop();current=null;if(wmEditing)watermarkEdit();if(view!=='search')showSaved(view,true);else render();if(updatePending)showUpdate();});
+$('#online-player').addEventListener('close',()=>{probeVersion++;clearTimeout(stallTimer);stop();current=null;if(view!=='search')showSaved(view,true);else render();if(updatePending)showUpdate();});
 $('#online-video').onplaying=()=>{clearTimeout(stallTimer);playerStatus('正在播放 · 观看进度自动保存到本机');};
 $('#online-video').onwaiting=()=>{playerStatus('缓冲中…');clearTimeout(stallTimer);const v=playVersion;stallTimer=setTimeout(()=>{if(v===playVersion&&!$('#online-video').paused)autoFailover('持续缓冲，正在为您优化播放线路…');},18000);};
 $('#online-video').onerror=()=>{if(current&&$('#online-video').getAttribute('src'))autoFailover();};
@@ -470,56 +470,6 @@ function resetPlayerPlus(){
  applyWatermark();
  startDanmaku();
 }
-// ---------- 广告水印遮挡 ----------
-// 采集站的赌博/广告水印是压制时烧进视频帧的，无法真正去除；这里让用户放一条
-// 可调位置与高度的黑条盖住它，按「片名+年份」记忆（跨线路共享，换源不用重调）。
-const WM_KEY='cinema-watermark-mask';
-let watermarkMasks={};try{watermarkMasks=JSON.parse(localStorage.getItem(WM_KEY)||'{}')}catch{}
-let wmEditing=false;
-const wmMaskKey=()=>current?((current.title||'')+'|'+(current.year||'')):'';
-function wmMaskEl(){
- let el=document.getElementById('wm-mask');
- if(!el){el=document.createElement('div');el.id='wm-mask';el.className='wm-mask';$('#video-stage').append(el);}
- return el;
-}
-function applyWatermark(){
- const el=wmMaskEl();
- const mask=watermarkMasks[wmMaskKey()];
- if(!mask||wmEditing){el.style.display=wmEditing?'block':'none';if(wmEditing){el.style.top=(mask?.top??0)+'%';el.style.height=(mask?.height??12)+'%';}return;}
- el.style.display='block';el.style.top=mask.top+'%';el.style.height=mask.height+'%';
-}
-function wmSaveMask(top,height){
- const k=wmMaskKey();if(!k)return;
- if(height<=0)delete watermarkMasks[k];else watermarkMasks[k]={top:Math.max(0,Math.min(96,top)),height:Math.max(2,Math.min(60,height))};
- try{localStorage.setItem(WM_KEY,JSON.stringify(watermarkMasks))}catch{}
-}
-function watermarkEdit(){
- const el=wmMaskEl();
- if(wmEditing){ // 再次点击=退出编辑并保存
-  wmEditing=false;el.classList.remove('wm-editing');$('#wm-tools')?.remove();
-  wmSaveMask(parseFloat(el.style.top)||0,parseFloat(el.style.height)||12);
-  applyWatermark();playerStatus('遮挡位置已保存，本片自动生效。');return;
- }
- wmEditing=true;
- const mask=watermarkMasks[wmMaskKey()]||{top:0,height:12};
- el.style.display='block';el.style.top=mask.top+'%';el.style.height=mask.height+'%';el.classList.add('wm-editing');
- const tools=document.createElement('div');tools.id='wm-tools';tools.className='wm-tools';
- tools.innerHTML='<b>遮挡广告水印</b><span>调到盖住水印的位置</span>'
-  +'<div><button type="button" data-wm="up">上移</button><button type="button" data-wm="down">下移</button>'
-  +'<button type="button" data-wm="taller">加高</button><button type="button" data-wm="shorter">变矮</button></div>'
-  +'<div><button type="button" data-wm="save" class="wm-save">保存</button><button type="button" data-wm="clear" class="wm-clear">清除并退出</button></div>';
- tools.onclick=e=>{const b=e.target.closest('[data-wm]');if(!b)return;e.stopPropagation();
-  const act=b.dataset.wm;let top=parseFloat(el.style.top)||0,height=parseFloat(el.style.height)||12;
-  if(act==='up')top=Math.max(0,top-2);else if(act==='down')top=Math.min(96,top+2);
-  else if(act==='taller')height=Math.min(60,height+2);else if(act==='shorter')height=Math.max(2,height-2);
-  else if(act==='save'){watermarkEdit();return;}
-  else if(act==='clear'){wmSaveMask(0,0);wmEditing=false;el.classList.remove('wm-editing');el.style.display='none';tools.remove();playerStatus('已清除本片的遮挡。');return;}
-  el.style.top=top+'%';el.style.height=height+'%';
- };
- $('#video-stage').append(tools);
- playerStatus('拖不动水印？用上方按钮调整黑条位置，盖住广告后点「保存」。');
-}
-$('#watermark-edit')&&($('#watermark-edit').onclick=()=>watermarkEdit());
 // ---------- 手动换一条播放线路 ----------
 $('#switch-line').onclick=()=>{
  if(!current||activeGroup.length<2){playerStatus('这部影片暂时只有一条可用线路。');return;}
@@ -622,5 +572,68 @@ let platformList=[];
 function drawPlatforms(){const custom=stored('cinema-custom-platforms',[]);$('#platform-links').innerHTML=[...platformList,...custom].map(p=>`<a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.name)} ↗</a>`).join('');$('#custom-platforms').innerHTML=custom.map((p,i)=>`<div><span>${esc(p.name)}</span><button data-up="${i}" aria-label="上移 ${esc(p.name)}">↑</button><button data-remove="${i}" aria-label="移除 ${esc(p.name)}">移除</button></div>`).join('');}
 $('#platforms-open').onclick=async()=>{$('#platforms-dialog').showModal();try{const d=await api('/api/platforms');platformList=d.platforms;drawPlatforms();}catch(e){$('#platform-status').textContent=e.message;}};
 $('#platforms-close').onclick=()=>$('#platforms-dialog').close();
+
+// ---------- 磁力播放（115 离线，经本机增强服务 + CloudDrive2） ----------
+// 流程：粘贴磁力 → 增强 /api/115/offline 添加到 115 离线 → /api/115/browse 列目录
+// → 点选文件 → /api/115/play 拿 CD2 直链（本机 127.0.0.1:29798，同机浏览器可直接播）。
+// 增强服务脚本：仓库根 extension.mjs（需与 CloudDrive2 同机运行）。
+const MAGNET_SERVER_KEY='cinema-magnet-server';
+const MAGNET_DIR_KEY='cinema-magnet-dir';
+const magnetExt=()=>$('#magnet-server').value.trim().replace(/\/+$/,'')||'http://localhost:3000';
+const magnetFmt=size=>size>=1073741824?(size/1073741824).toFixed(2)+' GB':size>=1048576?(size/1048576).toFixed(1)+' MB':Math.round(size/1024)+' KB';
+function magnetDialogOpen(){
+ $('#magnet-server').value=localStorage.getItem(MAGNET_SERVER_KEY)||'http://localhost:3000';
+ $('#magnet-dir').value=localStorage.getItem(MAGNET_DIR_KEY)||'/01-电影/待分类';
+ if(!$('#magnet-dialog').open)$('#magnet-dialog').showModal();
+}
+$('#magnet-open').onclick=()=>magnetDialogOpen();
+$('#magnet-close').onclick=()=>$('#magnet-dialog').close();
+$('#magnet-player-close').onclick=()=>{const v=$('#magnet-video');v.pause();v.removeAttribute('src');v.load();$('#magnet-player').close();};
+$('#magnet-browse').onclick=()=>magnetBrowse(true);
+async function magnetBrowse(announce){
+ const status=$('#magnet-status');
+ try{
+  if(announce)status.textContent='正在读取离线目录…';
+  const r=await fetch(magnetExt()+'/api/115/browse?'+new URLSearchParams({path:$('#magnet-dir').value.trim()||'/01-电影/待分类'}),{signal:AbortSignal.timeout(60000)});
+  const d=await r.json();
+  if(!r.ok)throw Error(d.error||'增强服务返回 '+r.status);
+  const vids=(d.entries||[]).filter(x=>!x.isDir&&/\.(mp4|mkv|webm|mov|m4v|ts|avi)$/i.test(x.name));
+  status.textContent=vids.length?`目录里共 ${vids.length} 个视频，点选播放（最近添加的排在后面）：`:'该目录还没有视频文件。';
+  $('#magnet-files').innerHTML=vids.slice(-80).reverse().map(f=>`<button data-magnet-path="${esc(f.path)}" data-title="${esc(f.name)}">${esc(f.name)}<small>${magnetFmt(f.size)}</small></button>`).join('')||'';
+ }catch(e){status.textContent='读取失败：'+(e.message||'无法连接增强服务（确认它已在服务器上运行）。');}
+}
+$('#magnet-form').onsubmit=async e=>{
+ e.preventDefault();
+ const status=$('#magnet-status'),box=$('#magnet-files');
+ const ext=magnetExt(),uri=$('#magnet-uri').value.trim(),dir=$('#magnet-dir').value.trim()||'/01-电影/待分类';
+ if(!uri.startsWith('magnet:')){status.textContent='请填写 magnet: 开头的磁力链接。';return;}
+ localStorage.setItem(MAGNET_SERVER_KEY,ext);localStorage.setItem(MAGNET_DIR_KEY,dir);
+ status.textContent='正在添加到 115 离线…';box.replaceChildren();
+ try{
+  const r=await fetch(ext+'/api/115/offline?'+new URLSearchParams({magnet:uri,dir}),{signal:AbortSignal.timeout(120000)});
+  const d=await r.json();
+  if(!r.ok||d.error)throw Error(d.error||'增强服务返回 '+r.status);
+  status.textContent='已添加到 115 离线。热门资源秒完成；稍等片刻点「查看离线文件」即可播放。也可以在 115 客户端查看进度。';
+  $('#magnet-uri').value='';
+ }catch(e2){status.textContent='添加失败：'+(e2.message||'无法连接增强服务。');}
+};
+$('#magnet-files').onclick=async e=>{
+ const b=e.target.closest('[data-magnet-path]');if(!b)return;
+ const ext=magnetExt();
+ const status=$('#magnet-status');
+ try{
+  status.textContent='正在获取播放地址…';
+  const r=await fetch(ext+'/api/115/stream?'+new URLSearchParams({path:b.dataset.magnetPath}),{signal:AbortSignal.timeout(120000)});
+  const d=await r.json();
+  if(!r.ok||!d.url)throw Error(d.error||'取播放地址失败');
+  $('#magnet-dialog').close();
+  $('#magnet-play-title').textContent=b.dataset.title;
+  $('#magnet-play-info').textContent='来源：115 网盘 · 经本机 CloudDrive2';
+  $('#magnet-video').src=d.url;
+  if(!$('#magnet-player').open)$('#magnet-player').showModal();
+  $('#magnet-video').play().catch(()=>{});
+  status.textContent='已开始播放。';
+ }catch(e2){status.textContent='播放失败：'+(e2.message||'');}
+};
 $('#add-platform').onsubmit=e=>{e.preventDefault();try{const url=new URL($('#platform-url').value);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw Error('请填写普通 HTTP/HTTPS 地址。');const list=stored('cinema-custom-platforms',[]);if(list.length>=30)throw Error('最多保存 30 个自定义入口。');list.push({name:$('#platform-name').value.trim().slice(0,30)||url.hostname,url:url.href});localStorage.setItem('cinema-custom-platforms',JSON.stringify(list));$('#platform-url').value='';$('#platform-name').value='';$('#platform-status').textContent='已保存到本机。';drawPlatforms();}catch(error){$('#platform-status').textContent=error.message;}};
 $('#custom-platforms').onclick=e=>{const list=stored('cinema-custom-platforms',[]),remove=e.target.closest('[data-remove]'),up=e.target.closest('[data-up]');if(remove)list.splice(Number(remove.dataset.remove),1);else if(up){const i=Number(up.dataset.up);if(i>0)[list[i-1],list[i]]=[list[i],list[i-1]];}else return;localStorage.setItem('cinema-custom-platforms',JSON.stringify(list));drawPlatforms();};

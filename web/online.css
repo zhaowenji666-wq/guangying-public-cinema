@@ -127,14 +127,13 @@
 .fs-panel button.active{color:#c8ed74;font-weight:600}
 .fs-panel-episodes{max-width:360px}
 
-/* 广告水印遮挡条：压制在视频帧里的水印去不掉，用黑条盖住，按片记忆 */
-.wm-mask{position:absolute;left:0;right:0;z-index:3;background:#000;display:none;pointer-events:none}
-.wm-mask.wm-editing{display:block;background:rgba(0,0,0,.88);outline:2px dashed #c8ed74;pointer-events:auto;z-index:6}
-.wm-tools{position:absolute;top:12px;left:12px;z-index:7;background:rgba(10,18,12,.94);border:1px solid #c8ed74;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;font-size:14px;color:#eef4ef;max-width:250px}
-.wm-tools b{font-size:15px}
-.wm-tools span{color:#aebbb1}
-.wm-tools div{display:flex;gap:6px;flex-wrap:wrap}
-.wm-tools button{background:#233028;border:1px solid #3b4e3f;color:#edf6ed;border-radius:7px;padding:6px 12px;cursor:pointer}
-.wm-tools button:hover{border-color:#c8ed74}
-.wm-tools .wm-save{background:#c8ed74;color:#142018;font-weight:600;border:none}
-.wm-tools .wm-clear{color:#e3aa9d}
+/* 磁力播放：解析弹窗与文件列表 */
+#magnet-dialog{width:min(760px,92vw);max-height:85vh;background:#142018;color:#eaf3eb;border:1px solid #3c5140;border-radius:18px;padding:25px}
+.magnet-form{display:flex;flex-direction:column;gap:12px;margin:16px 0}
+.magnet-form label{display:flex;flex-direction:column;gap:6px;font-size:15px;color:#bbcfbc}
+.magnet-form input{background:#0f1912;border:1px solid #3b4e3f;border-radius:8px;padding:11px 13px;color:#eef4ef;font-size:15px}
+.magnet-form .primary{align-self:flex-start;background:#c8ed74;color:#142018;border:none;border-radius:8px;padding:10px 22px;font-weight:600;cursor:pointer}
+.magnet-files{display:flex;flex-direction:column;gap:7px;margin-top:14px;max-height:46vh;overflow:auto}
+.magnet-files button{display:flex;justify-content:space-between;gap:14px;align-items:center;text-align:left;background:#1e2b22;border:1px solid #33453a;color:#eaf3eb;border-radius:9px;padding:11px 14px;font-size:15px;cursor:pointer}
+.magnet-files button:hover{border-color:#c8ed74}
+.magnet-files small{color:#9db2a0;white-space:nowrap}

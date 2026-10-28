@@ -3,6 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {spawn} from 'node:child_process';
 import {sources,query,remote,register,mediaSource,decodeBody,onlineRoute} from './online.mjs';
 const base=path.dirname(fileURLToPath(import.meta.url)),origin='http://localhost:3000';
 const healthFile=path.join(base,'source-health.json');
@@ -52,7 +53,27 @@ async function actorWorks(name){return cached('actor:'+name,async()=>{
  },86400000);}
 async function biliSearch(keyword){const d=await jsonRemote('https://api.bilibili.com/x/web-interface/search/type?'+new URLSearchParams({search_type:'video',keyword,page:'1'}));if(d.code!==0)throw Error('哔哩哔哩搜索暂不可用，可粘贴 BV 号匹配。');return {videos:(d.data?.result||[]).slice(0,15).map(v=>({bvid:v.bvid,title:plain(v.title),author:plain(v.author),duration:v.duration}))};}
 async function biliParts(bvid){if(!/^BV[a-zA-Z0-9]{10}$/.test(bvid))throw Error('BV 号无效');const d=await jsonRemote('https://api.bilibili.com/x/web-interface/view?bvid='+bvid);if(d.code!==0)throw Error('视频信息不可用');return {title:d.data.title,parts:d.data.pages.map(p=>({cid:p.cid,title:p.part,page:p.page}))};}
+
 function platforms(){return JSON.parse(fs.readFileSync(path.join(base,'platforms.json'),'utf8'));}
+// ---------- 115 磁力离线（经本机 CloudDrive2） ----------
+// CD2_HOME 指向含 cloud.py / cd2cli.py / clouddrive_pb2.py 的目录（默认仓库上一级）。
+const CD2_HOME=process.env.CD2_HOME||path.resolve(base,'..');
+function cd2(args){
+ return new Promise((resolve,reject)=>{
+  let settled=false,stdout='',stderr='';
+  const py=spawn('python',['cd2cli.py',...args],{cwd:CD2_HOME,windowsHide:true});
+  const timer=setTimeout(()=>{if(settled)return;settled=true;try{py.kill();}catch{}reject(Error('CD2 操作超时（确认 CloudDrive2 正在运行）'));},120000);
+  py.stdout.on('data',d=>stdout+=d);
+  py.stderr.on('data',d=>stderr+=d);
+  py.on('error',e=>{if(settled)return;settled=true;clearTimeout(timer);reject(Error('无法启动 python（'+e.message+'）'));});
+  py.on('close',code=>{
+   if(settled)return;settled=true;clearTimeout(timer);
+   if(code===0){try{return resolve(JSON.parse(stdout));}catch{return reject(Error('CD2 输出异常：'+stdout.slice(0,120)));}}
+   const line=stderr.trim().split('\n').filter(Boolean).pop();
+   reject(Error(line||('python 退出码 '+code)));
+  });
+ });
+}
 export const extensionServer=http.createServer(async(req,res)=>{
  if(req.method==='OPTIONS'){res.writeHead(405);res.end();return;}
  const url=new URL(req.url,origin);
@@ -63,7 +84,28 @@ export const extensionServer=http.createServer(async(req,res)=>{
   if(req.method!=='GET')return send(req,res,{error:'不支持此操作'},'application/json',405);
   if(url.pathname==='/api/online/sources')return send(req,res,{sources:sources.filter(s=>report.sources[s.id]?.enabled!==false).map(({id,name})=>({id,name})),disabled:Object.values(report.sources).filter(s=>!s.enabled).length,checkedAt:report.at});
   if(url.pathname==='/api/actor')return send(req,res,await actorWorks((url.searchParams.get('q')||'').trim().slice(0,60)));
+ 
   if(url.pathname==='/api/platforms')return send(req,res,platforms());
+  if(url.pathname==='/api/115/offline'){const magnet=url.searchParams.get('magnet')||'',dir=url.searchParams.get('dir')||'/01-电影/待分类';if(!/^magnet:/i.test(magnet))return send(req,res,{error:'请提供 magnet: 开头的磁力链接'},'application/json',400);return send(req,res,await cd2(['offline',magnet,dir]));}
+  if(url.pathname==='/api/115/tasks')return send(req,res,await cd2(['tasks',url.searchParams.get('dir')||'/01-电影/待分类']));
+  if(url.pathname==='/api/115/browse')return send(req,res,await cd2(['list',url.searchParams.get('path')||'/01-电影/待分类']));
+  if(url.pathname==='/api/115/play'){const p=url.searchParams.get('path')||'';if(!p.startsWith('/'))return send(req,res,{error:'缺少文件路径'},'application/json',400);return send(req,res,await cd2(['playurl',p]));}
+  if(url.pathname==='/api/115/stream'){
+   // 代理流：CD2 直链带 content-disposition:attachment，<video> 会拒绝播放；这里剥掉该头并透传 Range。
+   const p=url.searchParams.get('path')||'';
+   if(!p.startsWith('/'))return send(req,res,{error:'缺少文件路径'},'application/json',400);
+   const info=await cd2(['playurl',p]);
+   const range=req.headers.range;
+   const up=await fetch(info.url,{headers:{...(range?{Range:range}:{}),...(info.userAgent?{'User-Agent':info.userAgent}:{}),...(info.headers&&typeof info.headers==='object'?info.headers:{})}});
+   if(!up.ok&&up.status!==206)return send(req,res,{error:'源站返回 '+up.status},'application/json',502);
+   const h=new Headers(up.headers);
+   h.delete('content-disposition');
+   h.set('accept-ranges','bytes');
+   res.writeHead(up.status,Object.fromEntries(h.entries()));
+   if(req.method==='HEAD'||!up.body)return res.end();
+   const {Readable}=await import('node:stream');
+   return Readable.fromWeb(up.body).pipe(res);
+  }
   if(url.pathname==='/api/danmaku/search')return send(req,res,await cached('bili-search:'+url.search,()=>biliSearch((url.searchParams.get('q')||'').slice(0,100)),300000));
   if(url.pathname==='/api/danmaku/parts')return send(req,res,await cached('bili:'+url.search,()=>biliParts(url.searchParams.get('bvid')),3600000));
   if(url.pathname==='/api/danmaku/comments'){const cid=url.searchParams.get('cid');if(!/^\d{1,15}$/.test(cid||''))throw Error('弹幕分集标识无效');return send(req,res,await cached('xml:'+cid,()=>readRemote('https://comment.bilibili.com/'+cid+'.xml',8*1024*1024),3600000),'application/xml');}
