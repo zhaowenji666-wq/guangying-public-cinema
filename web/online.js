@@ -1,4 +1,4 @@
-const CINEMA_BUILD='20261028171828047';
+const CINEMA_BUILD='20261028180332142';
 const movieKey=m=>m.source+':'+m.id;
 function mediaKind(m){
  const type=String(m.type||''), text=type+' '+String(m.remarks||'');
@@ -352,7 +352,6 @@ function applyPlaybackSpeed(announce=true){
 }
 $('#online-speed').onchange=()=>{applyPlaybackSpeed();savePreferences();};
 $('#retry-online').onclick=()=>{const m=current||requestedMovie;if(m){remember();openMovie(m);}};
-$('#find-alternative').onclick=()=>{const m=current||requestedMovie;if(m){$('#query').value=m.title;$('#online-player').close();search();}};
 $('#online-favorite').onclick=()=>{if(!current)return;const id=key(current);if(favorites[id])delete favorites[id];else favorites[id]={...metadata(current),at:Date.now()};save();renderEpisodes();};
 setInterval(remember,5000);window.addEventListener('pagehide',remember);
 function showSaved(mode,preserve=false){if(view==='search')rememberSearch();cancelSearch();view=mode;$('#back-search').hidden=!searchSnapshot?.results?.length;results=Object.values(mode==='favorites'?favorites:mode==='history'?history:shelves).filter(m=>!['watchlist','watched'].includes(mode)||m.status===mode).map(m=>({...m,actors:m.actors||history[key(m)]?.actors,director:m.director||history[key(m)]?.director,genre:m.genre||history[key(m)]?.genre})).sort((a,b)=>(b.at||0)-(a.at||0));if(!preserve){clearFilters();$('#online-sort').value='recent';}$('#online-title').textContent=({favorites:'我的在线收藏',history:'继续观看 · 在线影视',watchlist:'在线待看',watched:'在线已看完'})[mode];$('#actor-panel').hidden=true;$('#source-progress').replaceChildren();$('#retry-failed').hidden=true;render();updateCounts();status(results.length?results.length+' 条记录，点击即可继续观看。':'这里还没有影片，搜索后即可收藏或观看。');}
@@ -360,7 +359,6 @@ $('#saved-view').onclick=()=>showSaved('favorites');$('#history-view').onclick=(
 
 
 
-$('#source-options').onchange=()=>{selected=[...$('#source-options').querySelectorAll('input:checked')].map(i=>i.value);saveSources();};
 
 async function syncSourceList(announce=false){
  try{const [d,h]=await Promise.all([api('/api/online/sources'),api('/api/source-health')]);const pending=d.sources.filter(s=>!h.sources[s.id]).length,failed=d.sources.filter(s=>h.sources[s.id]?.enabled===false).length;sources=d.sources.filter(s=>h.sources[s.id]?.enabled===true);selected=Array.isArray(selected)?selected.filter(id=>sources.some(s=>s.id===id)):sources.map(s=>s.id);if(announce)status(`已就绪 · 支持片名、演员和导演搜索。`);}
@@ -459,7 +457,6 @@ $('#actor-work-filter').oninput=renderActorWorks;
 $('#actor-works').onclick=e=>{const b=e.target.closest('[data-work]');if(b){$('#query').value=b.dataset.work;$('#search-kind').value='title';search();}};
 function renderCast(){const names=(current?.actors||'').split(/[,，、\/]/).map(s=>s.trim()).filter(Boolean).slice(0,16);$('#cast-links').innerHTML=(current?.director?`<span>导演：${esc(current.director)}</span>`:'')+names.map(name=>`<button data-actor="${esc(name)}">${esc(name)}</button>`).join('');}
 $('#cast-links').onclick=e=>{const b=e.target.closest('[data-actor]');if(b){$('#online-player').close();$('#query').value=b.dataset.actor;$('#search-kind').value='actor';search();}};
-async function sourceReport(){try{const d=await api('/api/source-health');if(!d.auditing)syncSourceList(false);$('#health-summary').textContent=(d.auditing?'正在逐源检测… ':'最近检测：'+(d.at?new Date(d.at).toLocaleString('zh-CN'):'尚未检测'))+'；已检测 '+Object.keys(d.sources).length+' 个源';$('#health-report').innerHTML=Object.values(d.sources).map(s=>`<div class="health-row ${s.enabled?'':'health-off'}"><strong>${s.enabled?'✓':'停用'} ${esc(s.name)}</strong><span>${esc(sourceFailureLabel(s.reason))}</span></div>`).join('');}catch(e){$('#health-summary').textContent='增强服务未就绪：'+e.message;}}
 
 
 
