@@ -164,22 +164,25 @@ async function search(retry=false){
  $('#actor-panel').hidden=true;
  if($('#search-kind').value==='actor'){await showActorWorks(q,version,true);if(version!==searchVersion)return;searching=false;$('#cancel-search').hidden=true;render();return;}
  if($('#search-kind').value==='auto')showActorWorks(q,version,false);
- const queue=sources.filter(s=>selected.includes(s.id)&&(!retry||retryIds.includes(s.id))).sort((a,b)=>(health[a.id]?.failed?1:0)-(health[b.id]?.failed?1:0)||(health[a.id]?.ms||5000)-(health[b.id]?.ms||5000));let next=0,finished=0,failed=0;
+ // 排序权重：0=上次成功且够快，1=成功但慢（>4s），2=上次失败。
+ // 先跑又快又稳的源，用户能更早看到第一批结果。
+ const weight=s=>{const h=health[s.id];if(!h)return 0;if(h.failed)return 2;return (h.ms||5000)>4000?1:0;};
+ const queue=sources.filter(s=>selected.includes(s.id)&&(!retry||retryIds.includes(s.id))).sort((a,b)=>weight(a)-weight(b)||(health[a.id]?.ms||5000)-(health[b.id]?.ms||5000));let next=0,finished=0,failed=0;
  if(!queue.length){searching=false;status('请先在片源设置中勾选至少一个片源。');$('#cancel-search').hidden=true;render();return;}
  status('正在搜索，结果将陆续显示…');
  async function worker(){while(next<queue.length&&version===searchVersion){
   const source=queue[next++],controller=new AbortController(),started=performance.now();controllers.push(controller);
   const tag=document.createElement('span');tag.textContent=source.name+' · 搜索中';$('#source-progress').append(tag);
-  const timeout=setTimeout(()=>controller.abort(),12000);
+  const timeout=setTimeout(()=>controller.abort(),8000);
   try{
    const r=await fetch(EXT_ORIGIN+'/api/online/search?'+new URLSearchParams({source:source.id,q}),{signal:controller.signal}),d=await r.json();
    if(version!==searchVersion)return;if(!r.ok)throw Error(d.error);
-   const incoming=new Set(d.results.map(key));results=results.filter(m=>!incoming.has(key(m)));results.push(...d.results);health[source.id]={ms:Math.round(performance.now()-started),failed:false};tag.textContent=source.name+' · '+d.results.length;render();
-  }catch{if(version!==searchVersion)return;failed++;failedSources.push(source.id);health[source.id]={ms:Math.round(performance.now()-started),failed:true};tag.classList.add('failed');tag.textContent=source.name+' · 暂不可用';}
+   const incoming=new Set(d.results.map(key));results=results.filter(m=>!incoming.has(key(m)));results.push(...d.results);{const ms=Math.round(performance.now()-started),prev=health[source.id]?.ms;health[source.id]={ms:prev?Math.round(prev*0.6+ms*0.4):ms,failed:false};}tag.textContent=source.name+' · '+d.results.length;render();
+  }catch{if(version!==searchVersion)return;failed++;failedSources.push(source.id);health[source.id]={ms:health[source.id]?.ms||5000,failed:true};tag.classList.add('failed');tag.textContent=source.name+' · 暂不可用';}
   finally{clearTimeout(timeout);controllers=controllers.filter(c=>c!==controller);}
   finished++;status(`已完成 ${finished}/${queue.length} 个片源 · ${cards.length} 部影片 · ${failed} 个片源暂不可用`);
  }}
- await Promise.all(Array.from({length:Math.min(8,queue.length)},worker));
+ await Promise.all(Array.from({length:Math.min(14,queue.length)},worker));
  if(version!==searchVersion)return;searching=false;$('#cancel-search').hidden=true;$('#retry-failed').hidden=!failedSources.length;localStorage.setItem('cinema-online-health',JSON.stringify(health));render();
  if(!results.length)status(`未找到结果，${failed}/${queue.length} 个片源不可用。可换片名或调整片源后重试。`);rememberSearch();
 }
