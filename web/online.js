@@ -1,4 +1,4 @@
-const CINEMA_BUILD='20261028183938231';
+const CINEMA_BUILD='20261028185431300';
 const movieKey=m=>m.source+':'+m.id;
 function mediaKind(m){
  const type=String(m.type||''), text=type+' '+String(m.remarks||'');
@@ -346,7 +346,12 @@ $('#online-video').onended=()=>{remember();if(!current)return;if(episode===curre
 $('#online-next').onclick=()=>playEpisode(episode+1,episodePosition(episode+1));
 $('#online-prev').onclick=()=>playEpisode(episode-1,episodePosition(episode-1));
 function applyPlaybackSpeed(announce=true){
- const rate=Number($('#online-speed').value),video=$('#online-video');video.playbackRate=rate;video.preservesPitch=true;
+ const select=$('#online-speed');
+ let rate=Number(select.value);
+ // 自愈：恢复的旧偏好若已被精简掉（select.value 变 '' → rate=0），
+ // playbackRate=0 会造成「画面时间冻结但缓冲继续增长」，这里强制回落 1× 并修正下拉显示。
+ if(!Number.isFinite(rate)||rate<=0){rate=1;select.value='1';}
+ const video=$('#online-video');video.playbackRate=rate;video.preservesPitch=true;
  if(hls){hls.config.maxBufferLength=Math.max(90,Math.ceil(rate*45));hls.config.maxMaxBufferLength=Math.max(180,Math.ceil(rate*90));hls.config.maxBufferSize=Math.max(120e6,Math.min(180e6,rate*40e6));const limit=speedQualityLimit(rate),auto=$('#player-quality').value==='-1';if(auto&&Number.isFinite(limit)){let cap=-1,best=0;hls.levels.forEach((level,i)=>{const height=level.height||0;if(height<=limit&&height>=best){best=height;cap=i;}});hls.autoLevelCapping=cap;}else hls.autoLevelCapping=-1;}
  if(announce){playerStatus("已切换 "+rate+" 倍速");}
 }
@@ -407,7 +412,7 @@ $('#online-player').addEventListener('close',()=>{if(updatePending&&applyAfterPl
 setInterval(async()=>{if(document.hidden)return;try{const text=await(await fetch('/online.js?check-update=1',{cache:'no-store'})).text();const next=text.match(/const CINEMA_BUILD='([^']+)'/)?.[1];if(next&&next!==CINEMA_BUILD){updatePending=true;showUpdate();}}catch{}},60000);
 if(['relevance','year-desc','year-asc','sources','recent'].includes(preferences.sort))$('#online-sort').value=preferences.sort;
 $('#hide-extras').checked=preferences.hideExtras!==false;
-if(['0.75','1','1.25','1.5','2','2.5','3','3.5','4','4.5','5'].includes(preferences.speed))$('#online-speed').value=preferences.speed;
+if(['0.75','1','1.25','1.5','2','3'].includes(preferences.speed))$('#online-speed').value=preferences.speed;
 if(['0','720','1080','1440','2160'].includes(localStorage.getItem('cinema-source-quality-target')))$('#source-quality').value=localStorage.getItem('cinema-source-quality-target');
 $('#autoplay-next').checked=preferences.autoplay!==false;
 renderRecent();updateCounts();render();
