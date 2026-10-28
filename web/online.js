@@ -1,4 +1,4 @@
-const CINEMA_BUILD='20261028190455345';
+const CINEMA_BUILD='20261028191311904';
 const movieKey=m=>m.source+':'+m.id;
 function mediaKind(m){
  const type=String(m.type||''), text=type+' '+String(m.remarks||'');
@@ -337,7 +337,7 @@ $('#source-quality').onchange=chooseSourceQuality;
 $('#online-grid').onclick=e=>{const quick=e.target.closest('[data-quick]');if(quick){quickOrganize(quick.dataset.quick,Number(quick.dataset.index));return;}const remove=e.target.closest('[data-remove]');if(remove){removeEntry(Number(remove.dataset.remove));return;}const button=e.target.closest('[data-card]');if(button)openBest(cards[Number(button.dataset.card)]);};
 $('#episodes').onclick=e=>{const button=e.target.closest('[data-episode]');if(button){const index=Number(button.dataset.episode);playEpisode(index,episodePosition(index));}};
 $('#online-close').onclick=()=>$('#online-player').close();
-$('#online-player').addEventListener('close',()=>{probeVersion++;clearTimeout(stallTimer);stop();current=null;if(view!=='search')showSaved(view,true);else render();if(updatePending)showUpdate();});
+$('#online-player').addEventListener('close',()=>{probeVersion++;clearTimeout(stallTimer);stop();current=null;if(wmEditing)watermarkEdit();if(view!=='search')showSaved(view,true);else render();if(updatePending)showUpdate();});
 $('#online-video').onplaying=()=>{clearTimeout(stallTimer);playerStatus('正在播放 · 观看进度自动保存到本机');};
 $('#online-video').onwaiting=()=>{playerStatus('缓冲中…');clearTimeout(stallTimer);const v=playVersion;stallTimer=setTimeout(()=>{if(v===playVersion&&!$('#online-video').paused)autoFailover('持续缓冲，正在为您优化播放线路…');},18000);};
 $('#online-video').onerror=()=>{if(current&&$('#online-video').getAttribute('src'))autoFailover();};
@@ -467,8 +467,68 @@ function resetPlayerPlus(){
  danmakuRequest++;$('#danmaku-file').value='';danmakuKey=episodeKey();danmakuItems=danmakuLibrary.get(danmakuKey)||normalizeDanmaku(localNotes[danmakuKey]||[]);abStart=null;abEnd=null;$('#ab-status').textContent='A–B 未设置';$('#danmaku-results').replaceChildren();$('#danmaku-status').textContent='可搜索并选择同版本视频弹幕，或导入 XML/JSON。';
  clearSubtitle();$('#danmaku-origin').hidden=true;$('#danmaku-origin').removeAttribute('href');$('#danmaku-query').value=current?.title||'';
  currentQuality='自动画质';$('#player-quality').innerHTML='<option value="-1">自动画质</option>';$('#player-audio').innerHTML='<option value="0">默认音轨</option>';
+ applyWatermark();
  startDanmaku();
 }
+// ---------- 广告水印遮挡 ----------
+// 采集站的赌博/广告水印是压制时烧进视频帧的，无法真正去除；这里让用户放一条
+// 可调位置与高度的黑条盖住它，按「片名+年份」记忆（跨线路共享，换源不用重调）。
+const WM_KEY='cinema-watermark-mask';
+let watermarkMasks={};try{watermarkMasks=JSON.parse(localStorage.getItem(WM_KEY)||'{}')}catch{}
+let wmEditing=false;
+const wmMaskKey=()=>current?((current.title||'')+'|'+(current.year||'')):'';
+function wmMaskEl(){
+ let el=document.getElementById('wm-mask');
+ if(!el){el=document.createElement('div');el.id='wm-mask';el.className='wm-mask';$('#video-stage').append(el);}
+ return el;
+}
+function applyWatermark(){
+ const el=wmMaskEl();
+ const mask=watermarkMasks[wmMaskKey()];
+ if(!mask||wmEditing){el.style.display=wmEditing?'block':'none';if(wmEditing){el.style.top=(mask?.top??0)+'%';el.style.height=(mask?.height??12)+'%';}return;}
+ el.style.display='block';el.style.top=mask.top+'%';el.style.height=mask.height+'%';
+}
+function wmSaveMask(top,height){
+ const k=wmMaskKey();if(!k)return;
+ if(height<=0)delete watermarkMasks[k];else watermarkMasks[k]={top:Math.max(0,Math.min(96,top)),height:Math.max(2,Math.min(60,height))};
+ try{localStorage.setItem(WM_KEY,JSON.stringify(watermarkMasks))}catch{}
+}
+function watermarkEdit(){
+ const el=wmMaskEl();
+ if(wmEditing){ // 再次点击=退出编辑并保存
+  wmEditing=false;el.classList.remove('wm-editing');$('#wm-tools')?.remove();
+  wmSaveMask(parseFloat(el.style.top)||0,parseFloat(el.style.height)||12);
+  applyWatermark();playerStatus('遮挡位置已保存，本片自动生效。');return;
+ }
+ wmEditing=true;
+ const mask=watermarkMasks[wmMaskKey()]||{top:0,height:12};
+ el.style.display='block';el.style.top=mask.top+'%';el.style.height=mask.height+'%';el.classList.add('wm-editing');
+ const tools=document.createElement('div');tools.id='wm-tools';tools.className='wm-tools';
+ tools.innerHTML='<b>遮挡广告水印</b><span>调到盖住水印的位置</span>'
+  +'<div><button type="button" data-wm="up">上移</button><button type="button" data-wm="down">下移</button>'
+  +'<button type="button" data-wm="taller">加高</button><button type="button" data-wm="shorter">变矮</button></div>'
+  +'<div><button type="button" data-wm="save" class="wm-save">保存</button><button type="button" data-wm="clear" class="wm-clear">清除并退出</button></div>';
+ tools.onclick=e=>{const b=e.target.closest('[data-wm]');if(!b)return;e.stopPropagation();
+  const act=b.dataset.wm;let top=parseFloat(el.style.top)||0,height=parseFloat(el.style.height)||12;
+  if(act==='up')top=Math.max(0,top-2);else if(act==='down')top=Math.min(96,top+2);
+  else if(act==='taller')height=Math.min(60,height+2);else if(act==='shorter')height=Math.max(2,height-2);
+  else if(act==='save'){watermarkEdit();return;}
+  else if(act==='clear'){wmSaveMask(0,0);wmEditing=false;el.classList.remove('wm-editing');el.style.display='none';tools.remove();playerStatus('已清除本片的遮挡。');return;}
+  el.style.top=top+'%';el.style.height=height+'%';
+ };
+ $('#video-stage').append(tools);
+ playerStatus('拖不动水印？用上方按钮调整黑条位置，盖住广告后点「保存」。');
+}
+$('#watermark-edit')&&($('#watermark-edit').onclick=()=>watermarkEdit());
+// ---------- 手动换一条播放线路 ----------
+$('#switch-line').onclick=()=>{
+ if(!current||activeGroup.length<2){playerStatus('这部影片暂时只有一条可用线路。');return;}
+ probeVersion++;selectionHint='';
+ const others=activeGroup.filter(m=>key(m)!==key(current)).sort((a,b)=>sourceRank(a)-sourceRank(b));
+ if(!others.length){playerStatus('其他线路刚才都试过了，稍后再试。');return;}
+ playerStatus('正在为您切换播放线路…');
+ triedSources.add(key(others[0]));switchSource(others[0]);
+};
 function configureHlsPlus(instance){
  // 「最好画质」策略：清单就绪后，起始档直接拉到最高（之后 ABR 继续兜底，不会锁死）。
  instance.on(Hls.Events.MANIFEST_PARSED,()=>{if(instance!==hls)return;$('#player-quality').innerHTML='<option value="-1">自动画质（速度自适应）</option>'+instance.levels.map((level,i)=>`<option value="${i}">${qualityLabel(level.height)}${level.bitrate?' · '+(level.bitrate/1000000).toFixed(1)+' Mbps':''}</option>`).join('');if(instance.levels.length>1)instance.nextLevel=instance.levels.length-1;renderFsQuality();applyPlaybackSpeed(false);});
