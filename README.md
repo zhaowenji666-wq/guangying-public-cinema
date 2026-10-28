@@ -37,6 +37,37 @@ npm run audit:live    # 逐条体检，结果写入 live-report.json（只报告
 
 体检只报告不自动删改：直播源抖动频繁，自动删减容易把能用的频道误杀。
 
+## 片源来源与筛选
+
+采集源不是随便凑的，来源与筛选标准如下。
+
+来源（均为开源项目，格式统一为苹果CMS `api.php/provide/vod`）：
+
+- [LunaTV-config](https://github.com/hafrey1/LunaTV-config) 及其分支 [vodtv/api](https://github.com/vodtv/api)（每日自动检测 API 状态，`report.md` 里有全部候选与成功率）
+- [moontv-aggr-config](https://github.com/smallmain/moontv-aggr-config)（聚合多个 MoonTV/LunaTV 配置）
+- [tvbox-ysc-config](https://github.com/Lightconer/tvbox-ysc-config)（TVBox 多仓聚合）
+- [awesome-zhuiju-free](https://github.com/laoma528/awesome-zhuiju-free) 推荐的 TVBox 配置地址
+
+> 只有 type=1（苹果CMS）的接口能直接接入本站。TVBox 的 type=3（drpy/spider JS 爬虫）
+> 和 IPTV 的 m3u 直播流是另外两种形态，不能直接当搜索源用。
+
+一条源要经过四关才会留在列表里：
+
+1. **搜索**：`?ac=videolist&wd=` 返回非空 `list`；
+2. **详情**：`?ac=detail&ids=` 能取到 `vod_play_url`；
+3. **播放**：首集地址能拿到 `#EXTM3U`（播放页则先经 `rescue` 还原真实 m3u8）；
+4. **线上**：以上三步必须**通过已部署站点**跑通 —— Cloudflare 出口和自己的网络不同。
+
+第 4 关是重点：一批源（暴风、豆瓣、茅台、闪电、新浪、飘零、索尼等十几家）在本机能搜能播，
+但 Cloudflare 出口被对方拦截（搜索阶段就 403 或直接连接重置），只能放弃。
+反过来，也有源（如电影天堂、非凡资源）会时好时坏，所以体检失败会重试一次，且不自动删源。
+
+```bash
+npm run audit:sources   # 线上体检，结果写入 functions/_health.js，坏源前端自动停用
+```
+
+当前 27 个源，24 个可用（约 89%）。
+
 ## 部署
 
 ### Cloudflare Pages（已上线，国内可用）

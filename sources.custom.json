@@ -1,34 +1,54 @@
 {
-  "api_site": {
-    "ys.cxkjg.cn": {
-      "name": "🎬创享资源",
-      "api": "https://ys.cxkjg.cn/api/provide/vod",
-      "detail": "https://ys.cxkjg.cn"
-    },
-    "cj.lziapi.com": {
-      "name": "🎬量子资源",
-      "api": "https://cj.lziapi.com/api.php/provide/vod",
-      "detail": "https://cj.lziapi.com"
-    },
-    "cj.ffzyapi.com": {
-      "name": "🎬非凡资源二线",
-      "api": "https://cj.ffzyapi.com/api.php/provide/vod",
-      "detail": "https://cj.ffzyapi.com"
-    },
-    "jyzyapi.com": {
-      "name": "🎬金鹰资源",
-      "api": "https://jyzyapi.com/api.php/provide/vod",
-      "detail": "https://jyzyapi.com"
-    },
-    "360zy.main": {
-      "name": "🎬360资源(主域)",
-      "api": "https://360zy.com/api.php/provide/vod",
-      "detail": "https://360zy.com"
-    },
-    "www.huyaapi.com": {
-      "name": "🎬虎牙资源",
-      "api": "https://www.huyaapi.com/api.php/provide/vod/from/hym3u8",
-      "detail": "https://www.huyaapi.com"
-    }
+ "api_site": {
+  "ys.cxkjg.cn": {
+   "name": "🎬创享资源",
+   "api": "https://ys.cxkjg.cn/api/provide/vod",
+   "detail": "https://ys.cxkjg.cn"
+  },
+  "jyzyapi.com": {
+   "name": "🎬金鹰资源",
+   "api": "https://jyzyapi.com/api.php/provide/vod",
+   "detail": "https://jyzyapi.com"
+  },
+  "360zy.main": {
+   "name": "🎬360资源(主域)",
+   "api": "https://360zy.com/api.php/provide/vod",
+   "detail": "https://360zy.com"
+  },
+  "www.huyaapi.com": {
+   "name": "🎬虎牙资源",
+   "api": "https://www.huyaapi.com/api.php/provide/vod/from/hym3u8",
+   "detail": "https://www.huyaapi.com"
+  },
+  "zuidazy.me": {
+   "name": "🎬最大点播",
+   "api": "https://zuidazy.me/api.php/provide/vod",
+   "detail": "https://zuidazy.me"
+  },
+  "api.wujinapi.com": {
+   "name": "🎬无尽资源",
+   "api": "https://api.wujinapi.com/api.php/provide/vod",
+   "detail": "https://api.wujinapi.com"
+  },
+  "www.hongniuzy3.com": {
+   "name": "🎬红牛二线",
+   "api": "https://www.hongniuzy3.com/api.php/provide/vod",
+   "detail": "https://www.hongniuzy3.com"
+  },
+  "subocj.com": {
+   "name": "🎬速播二线",
+   "api": "https://subocj.com/api.php/provide/vod",
+   "detail": "https://subocj.com"
+  },
+  "dadiapi.com": {
+   "name": "🎬大地资源",
+   "api": "https://dadiapi.com/api.php/provide/vod",
+   "detail": "https://dadiapi.com"
+  },
+  "api.apibdzy.com": {
+   "name": "🎬百度云资源",
+   "api": "https://api.apibdzy.com/api.php/provide/vod",
+   "detail": "https://api.apibdzy.com"
   }
+ }
 }
