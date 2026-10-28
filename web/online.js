@@ -1,4 +1,4 @@
-const CINEMA_BUILD='20261028180332142';
+const CINEMA_BUILD='20261028183938231';
 const movieKey=m=>m.source+':'+m.id;
 function mediaKind(m){
  const type=String(m.type||''), text=type+' '+String(m.remarks||'');

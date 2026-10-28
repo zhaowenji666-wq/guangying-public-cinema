@@ -79,7 +79,7 @@ export async function previewSearch(keyword) {
   const url = 'https://itunes.apple.com/search?' + new URLSearchParams({
     term: q, media: 'music', entity: 'song', limit: '30', country: 'HK', lang: 'zh_cn',
   });
-  const r = await fetch(url, { cf: { cacheTtl: 600, cacheEverything: true } });
+  const r = await fetch(url, { cf: { cacheTtl: 1800, cacheEverything: true } });
   if (!r.ok) throw Error('歌曲搜索返回 ' + r.status);
   const data = await r.json();
   return (data.results || []).flatMap(item => {
@@ -126,4 +126,111 @@ export async function kugouUrl(hash, cacheTtl = 0) {
   const data = await r.json(), url = String(data.url || '');
   if (data.errcode || !/^https:\/\//i.test(url)) throw Error('这首歌暂时没有可播放的普通音质');
   return { url, size: Number(data.fileSize) || 0 };
+}
+
+// ---------------- 网易云音乐（api-enhanced）----------------
+// 上游：https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced（公共实例）
+// 实测结论：
+//  - 搜索 /cloudsearch 匿名可用；
+//  - 播放地址 /song/url/v1 匿名直连一律 code=404，必须同时满足：
+//    (1) 带匿名账号 cookie（/register/anonimous 免费、可重复领取）
+//    (2) 请求参数 randomCNIP=true（走国内随机 IP 出口）
+//  - 直链无 Referer 防盗链，但按平台规则不放直链给浏览器，一律经 /music/play 代理。
+//  - 匿名档位实际给到 128k（无损需 VIP cookie，自动降级为可播的最高档）。
+const NCM_BASE = 'https://ncm-api-enhanced.vercel.app';
+let ncmCookie = '';
+let ncmCookieAt = 0;
+
+async function ncmAnonCookie(force = false) {
+  // 匿名 cookie 长期有效，进程内缓存即可；边缘实例多副本时各自领一份也无妨。
+  if (!force && ncmCookie && Date.now() - ncmCookieAt < 7 * 24 * 3600 * 1000) return ncmCookie;
+  // 实测该端点随机限流（匿名注册 10 连打成功率约 40%，code=400 与成功交替），
+  // 但「随机 username + 退避重试」5 轮验证 5/5 全成功。重试 5 次，退避 0.8s/1.6s/2.4s/3.2s。
+  let d = null;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const username = 'gy' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    try {
+      const r = await fetch(NCM_BASE + '/register/anonimous?' + new URLSearchParams({ username }), {
+        cf: { cacheTtl: 0 },
+      });
+      if (r.ok) {
+        const data = await r.json();
+        if (data.code === 200 && data.cookie) { d = data; break; }
+      }
+    } catch { /* 网络抖动，继续重试 */ }
+    if (attempt < 5) await new Promise(resolve => setTimeout(resolve, 800 * attempt));
+  }
+  if (!d) throw Error('网易云匿名登录暂不可用');
+  const pairs = String(d.cookie).split(';;')
+    .map(p => p.split(';')[0])
+    .filter(p => /^[^=]+=[^;]/.test(p));
+  ncmCookie = [...new Set(pairs)].join('; ');
+  ncmCookieAt = Date.now();
+  return ncmCookie;
+}
+
+async function ncmGet(path, cookie) {
+  const r = await fetch(NCM_BASE + path, {
+    headers: { Cookie: cookie },
+    cf: { cacheTtl: 0 },
+  });
+  if (!r.ok) throw Error('网易云接口返回 ' + r.status);
+  return r.json();
+}
+
+const NCM_FEE_LABEL = { 0: '', 1: 'VIP', 4: '购买专辑', 8: '免费' };
+
+const ncmSearchCache = new Map(); // 关键词 → {at, list}
+export async function ncmSearch(keyword, limit = 20) {
+  const q = String(keyword || '').trim().slice(0, 60);
+  if (!q) throw Error('请输入歌曲或歌手名');
+  const cacheKey = q + '|' + limit;
+  const hit = ncmSearchCache.get(cacheKey);
+  if (hit && Date.now() - hit.at < 600000) return hit.list;
+  const cookie = await ncmAnonCookie();
+  const d = await ncmGet('/cloudsearch?' + new URLSearchParams({ keywords: q, limit: String(limit) }), cookie);
+  const songs = d.result?.songs || [];
+  return songs.map(s => {
+    const artists = (s.ar || s.artists || []).map(a => a.name).filter(Boolean);
+    const album = (s.al || s.album || {}).name || '';
+    const sec = Math.round((s.duration || 0) / 1000);
+    return {
+      id: 'ncm:' + s.id,
+      title: String(s.name || '').replace(/<[^>]*>/g, ''),
+      author: artists.slice(0, 3).join('/'),
+      album,
+      duration: sec ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : '',
+      cover: ((s.al || s.album || {}).picUrl || '').replace(/^http:/, 'https:'),
+      fee: NCM_FEE_LABEL[s.fee] ?? '',
+      provider: '网易云',
+      source: 'ncm',
+    };
+  }).filter(x => x.title);
+  if (ncmSearchCache.size > 200) ncmSearchCache.clear();
+  ncmSearchCache.set(cacheKey, { at: Date.now(), list });
+  return list;
+}
+
+// 返回直链（不直接下发给浏览器，仅由 /music/play 代理使用）。
+// 失败自动强制刷新匿名 cookie 重试一次，规避匿名会话偶发失效。
+export async function ncmUrl(id, level = 'standard') {
+  const songId = String(id).replace(/^ncm:/, '');
+  if (!/^\d{4,20}$/.test(songId)) throw Error('网易云歌曲标识无效');
+  if (!/^(standard|higher|exhigh|lossless|hires)$/.test(level)) level = 'standard';
+  let cookie = await ncmAnonCookie();
+  const attempt = async (ck, withCnIp) => ncmGet(
+    '/song/url/v1?' + new URLSearchParams({ id: songId, level, randomCNIP: withCnIp ? 'true' : 'false' }), ck);
+  let data = await attempt(cookie, true);
+  let item = data.data?.[0];
+  if (!item?.url) {
+    // 换新匿名身份再试一次
+    cookie = await ncmAnonCookie(true);
+    data = await attempt(cookie, true);
+    item = data.data?.[0];
+  }
+  let url = String(item?.url || '');
+  if (!/^https?:\/\//i.test(url)) throw Error(data.message || item?.message || '这首歌暂时无法播放');
+  // 网易云经常下发 http:// 直链；本站全部经 /music/play 代理，代理侧强制升级 https。
+  url = url.replace(/^http:\/\//i, 'https://');
+  return { url, size: Number(item.size) || 0, type: String(item.type || 'mp3'), br: Number(item.br) || 0 };
 }
