@@ -1,4 +1,4 @@
-const CINEMA_BUILD='20261028185431300';
+const CINEMA_BUILD='20261028190455345';
 const movieKey=m=>m.source+':'+m.id;
 function mediaKind(m){
  const type=String(m.type||''), text=type+' '+String(m.remarks||'');
@@ -157,7 +157,6 @@ const qualityTargetLabel=height=>height>=2160?'4K':height>=1440?'2K':height>=108
 // 选源过程的用户文案只谈「画质/流畅」：多少毫秒、哪家片源属于实现细节，不暴露给用户。
 const sourceChoiceHint=(probe,target=0)=>target&&probe.height&&probe.height<target?qualityLabel(probe.height):qualityLabel(probe.height);
 const inferredQuality=movie=>{const text=[movie?.title,movie?.remarks,movie?.genre].filter(Boolean).join(' ');return /(?:2160p?|4k|超高清)/i.test(text)?2160:/(?:1440p?|2k)/i.test(text)?1440:/1080p?/i.test(text)?1080:/720p?/i.test(text)?720:0;};
-const speedQualityLimit=rate=>rate>=3.5?720:rate>=2.5?1080:Infinity;
 const blockedSources=new Set(['slapibf.com','fhapi9.com']),unsafeContent=/成人|伦理|情色|色情|无码|有码|成人视频|AV女优|福利姬|写真|里番|三级(?:片|电影)|限制级/i;
 const safeMovie=movie=>movie&&!blockedSources.has(movie.source)&&!unsafeContent.test([movie.title,movie.type,movie.genre,movie.remarks].filter(Boolean).join(' '));
 for(const store of [favorites,history,shelves])for(const [id,movie] of Object.entries(store))if(!safeMovie(movie))delete store[id];
@@ -272,7 +271,7 @@ async function playEpisode(index,time=0,fromStart=false){
  if(current.episodes[index].hls!==false&&window.Hls?.isSupported()){
   // 源站按单连接限速（实测单连接约 0.08MB/s，8 连接并发可达 1.9MB/s），
   // 因此改用多连接分片并发拉取 + 更深的预缓冲，尽量吃满叠加带宽。
-  let recovered=false,networkRetries=0;hls=new Hls({maxBufferLength:90,maxMaxBufferLength:180,backBufferLength:30,maxBufferSize:120*1000*1000,manifestLoadingTimeOut:15000,fragLoadingTimeOut:30000,manifestLoadingMaxRetry:3,fragLoadingMaxRetry:4,startLevel:-1,abrEwmaDefaultEstimate:3000000,capLevelToPlayerSize:true});
+  let recovered=false,networkRetries=0;hls=new Hls({maxBufferLength:90,maxMaxBufferLength:180,backBufferLength:30,maxBufferSize:120*1000*1000,manifestLoadingTimeOut:15000,fragLoadingTimeOut:30000,manifestLoadingMaxRetry:3,fragLoadingMaxRetry:4,startLevel:-1,abrEwmaDefaultEstimate:12000000,abrBandWidthFactor:1,abrBandWidthUpFactor:1.5,capLevelToPlayerSize:false});
   hls.on(Hls.Events.ERROR,(_event,data)=>{if(version!==playVersion||!data.fatal)return;if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&!recovered){recovered=true;hls.recoverMediaError();}else if(data.type===Hls.ErrorTypes.NETWORK_ERROR&&networkRetries++<1){playerStatus('网络中断，正在重连一次…');if(/manifest|levelLoad/i.test(data.details||''))hls.loadSource(url);else hls.startLoad(video.currentTime||-1);}else{hls.destroy();hls=null;if(video.canPlayType('application/vnd.apple.mpegurl')){video.src=url;playerStatus('切换到浏览器原生 HLS 播放。');}else autoFailover();}});
   configureHlsPlus(hls);
   hls.loadSource(url);hls.attachMedia(video);
@@ -352,10 +351,9 @@ function applyPlaybackSpeed(announce=true){
  // playbackRate=0 会造成「画面时间冻结但缓冲继续增长」，这里强制回落 1× 并修正下拉显示。
  if(!Number.isFinite(rate)||rate<=0){rate=1;select.value='1';}
  const video=$('#online-video');video.playbackRate=rate;video.preservesPitch=true;
- if(hls){hls.config.maxBufferLength=Math.max(90,Math.ceil(rate*45));hls.config.maxMaxBufferLength=Math.max(180,Math.ceil(rate*90));hls.config.maxBufferSize=Math.max(120e6,Math.min(180e6,rate*40e6));const limit=speedQualityLimit(rate),auto=$('#player-quality').value==='-1';if(auto&&Number.isFinite(limit)){let cap=-1,best=0;hls.levels.forEach((level,i)=>{const height=level.height||0;if(height<=limit&&height>=best){best=height;cap=i;}});hls.autoLevelCapping=cap;}else hls.autoLevelCapping=-1;}
+ if(hls){hls.config.maxBufferLength=Math.max(90,Math.ceil(rate*45));hls.config.maxMaxBufferLength=Math.max(180,Math.ceil(rate*90));hls.config.maxBufferSize=Math.max(120e6,Math.min(180e6,rate*40e6));hls.autoLevelCapping=-1;}
  if(announce){playerStatus("已切换 "+rate+" 倍速");}
 }
-$('#online-speed').onchange=()=>{applyPlaybackSpeed();savePreferences();};
 $('#retry-online').onclick=()=>{const m=current||requestedMovie;if(m){remember();openMovie(m);}};
 $('#online-favorite').onclick=()=>{if(!current)return;const id=key(current);if(favorites[id])delete favorites[id];else favorites[id]={...metadata(current),at:Date.now()};save();renderEpisodes();};
 setInterval(remember,5000);window.addEventListener('pagehide',remember);
@@ -412,7 +410,7 @@ $('#online-player').addEventListener('close',()=>{if(updatePending&&applyAfterPl
 setInterval(async()=>{if(document.hidden)return;try{const text=await(await fetch('/online.js?check-update=1',{cache:'no-store'})).text();const next=text.match(/const CINEMA_BUILD='([^']+)'/)?.[1];if(next&&next!==CINEMA_BUILD){updatePending=true;showUpdate();}}catch{}},60000);
 if(['relevance','year-desc','year-asc','sources','recent'].includes(preferences.sort))$('#online-sort').value=preferences.sort;
 $('#hide-extras').checked=preferences.hideExtras!==false;
-if(['0.75','1','1.25','1.5','2','3'].includes(preferences.speed))$('#online-speed').value=preferences.speed;
+if(['0.75','1','1.25','1.5','2','3','4'].includes(preferences.speed))$('#online-speed').value=preferences.speed;
 if(['0','720','1080','1440','2160'].includes(localStorage.getItem('cinema-source-quality-target')))$('#source-quality').value=localStorage.getItem('cinema-source-quality-target');
 $('#autoplay-next').checked=preferences.autoplay!==false;
 renderRecent();updateCounts();render();
@@ -472,10 +470,37 @@ function resetPlayerPlus(){
  startDanmaku();
 }
 function configureHlsPlus(instance){
- instance.on(Hls.Events.MANIFEST_PARSED,()=>{if(instance!==hls)return;$('#player-quality').innerHTML='<option value="-1">自动画质（速度自适应）</option>'+instance.levels.map((level,i)=>`<option value="${i}">${qualityLabel(level.height)}${level.bitrate?' · '+(level.bitrate/1000000).toFixed(1)+' Mbps':''}</option>`).join('');applyPlaybackSpeed(false);});
- instance.on(Hls.Events.LEVEL_SWITCHED,(_event,data)=>{if(instance!==hls)return;const level=instance.levels[data.level];if(level)currentQuality=($('#player-quality').value==='-1'?'自动 · ':'')+qualityLabel(level.height||$('#online-video').videoHeight);});
+ // 「最好画质」策略：清单就绪后，起始档直接拉到最高（之后 ABR 继续兜底，不会锁死）。
+ instance.on(Hls.Events.MANIFEST_PARSED,()=>{if(instance!==hls)return;$('#player-quality').innerHTML='<option value="-1">自动画质（速度自适应）</option>'+instance.levels.map((level,i)=>`<option value="${i}">${qualityLabel(level.height)}${level.bitrate?' · '+(level.bitrate/1000000).toFixed(1)+' Mbps':''}</option>`).join('');if(instance.levels.length>1)instance.nextLevel=instance.levels.length-1;renderFsQuality();applyPlaybackSpeed(false);});
+ instance.on(Hls.Events.LEVEL_SWITCHED,(_event,data)=>{if(instance!==hls)return;const level=instance.levels[data.level];if(level)currentQuality=($('#player-quality').value==='-1'?'自动 · ':'')+qualityLabel(level.height||$('#online-video').videoHeight);renderFsQuality();});
  instance.on(Hls.Events.AUDIO_TRACKS_UPDATED,()=>{if(instance!==hls)return;$('#player-audio').innerHTML=instance.audioTracks.map((track,i)=>`<option value="${i}">${esc(track.name||track.lang||'音轨 '+(i+1))}</option>`).join('')||'<option value="0">默认音轨</option>';});
 }
+// ---------- 全屏内控制（画质切换 / 选集 / 倍速） ----------
+// 全屏的是 #video-stage，工具栏不可见；把最常用的三类操作放进视频上的悬浮层，
+// 单击画面切换显隐，体验对齐主流播放器。
+function renderFsQuality(){
+ const panel=$('#fs-quality-panel');if(!panel)return;
+ const levels=hls?.levels||[];
+ const items=[{label:'自动',value:'-1'}].concat(levels.map((lv,i)=>({label:qualityLabel(lv.height)+(lv.bitrate?' · '+(lv.bitrate/1e6).toFixed(1)+'M':''),value:String(i)})));
+ const cur=String($('#player-quality').value);
+ panel.innerHTML=items.map(x=>`<button data-fs-quality="${x.value}" class="${x.value===cur?'active':''}">${esc(x.label)}</button>`).join('');
+}
+function renderFsEpisodes(){
+ const panel=$('#fs-episodes-panel');if(!panel||!current)return;
+ panel.innerHTML=current.episodes.map((e,i)=>`<button data-fs-episode="${i}" class="${i===episode?'active':''}">${esc(e.title)}</button>`).join('');
+}
+function fsOverlay(show){
+ const o=$('#fs-overlay');if(!o)return;
+ if(show===undefined)o.hidden=!o.hidden;else o.hidden=!show;
+ if(!o.hidden){renderFsQuality();renderFsEpisodes();}
+}
+$('#fs-quality').onclick=e=>{e.stopPropagation();const p=$('#fs-quality-panel');p.hidden=!p.hidden;$('#fs-episodes-panel').hidden=true;};
+$('#fs-episodes').onclick=e=>{e.stopPropagation();const p=$('#fs-episodes-panel');p.hidden=!p.hidden;$('#fs-quality-panel').hidden=true;renderFsEpisodes();};
+$('#fs-quality-panel').onclick=e=>{const b=e.target.closest('[data-fs-quality]');if(!b)return;e.stopPropagation();const value=Number(b.dataset.fsQuality);if(hls)hls.currentLevel=value;$('#player-quality').value=b.dataset.fsQuality;$('#player-quality').onchange();$('#fs-quality-panel').hidden=true;};
+$('#fs-episodes-panel').onclick=e=>{const b=e.target.closest('[data-fs-episode]');if(!b)return;e.stopPropagation();playEpisode(Number(b.dataset.fsEpisode),episodePosition(Number(b.dataset.fsEpisode)));$('#fs-episodes-panel').hidden=true;};
+$('#fs-speed').onchange=()=>{$('#online-speed').value=$('#fs-speed').value;applyPlaybackSpeed(true);savePreferences();};
+$('#online-speed').onchange=()=>{applyPlaybackSpeed();savePreferences();$('#fs-speed').value=$('#online-speed').value;};
+$('#online-video').addEventListener('click',()=>{if(document.fullscreenElement)fsOverlay();});
 $('#player-quality').onchange=()=>{if(hls){hls.currentLevel=Number($('#player-quality').value);currentQuality=$('#player-quality').value==='-1'?'自动':$('#player-quality').selectedOptions[0].textContent.split(' · ')[0];applyPlaybackSpeed(false);}};$('#player-audio').onchange=()=>{if(hls)hls.audioTrack=Number($('#player-audio').value);};
 $('#player-fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await $('#video-stage').requestFullscreen();}catch{playerStatus('当前浏览器暂不支持此全屏操作。');}};
 $('#player-pip').onclick=async()=>{try{if(document.pictureInPictureElement)await document.exitPictureInPicture();else await $('#online-video').requestPictureInPicture();}catch{playerStatus('画中画暂不可用，请等待视频就绪后重试。');}};

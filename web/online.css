@@ -112,3 +112,17 @@
 /* 用户不关心逐条线路的搜索进度,把胶囊做得更小更淡 */
 .source-progress{min-height:0}
 .source-progress span{font-size:12px;padding:3px 9px;opacity:.65}
+
+/* 全屏内悬浮控制：画质 / 选集 / 倍速 */
+#fs-overlay{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;gap:10px;padding:20px;pointer-events:none}
+#fs-overlay[hidden]{display:none}
+.fs-bar{display:flex;gap:10px;align-items:center;pointer-events:auto}
+.fs-bar button,.fs-speed-label{background:rgba(10,18,12,.82);border:1px solid rgba(200,237,116,.45);color:#eef4ef;border-radius:9px;padding:8px 16px;font-size:15px;cursor:pointer}
+.fs-bar button:hover,.fs-speed-label:hover{border-color:#c8ed74}
+.fs-speed-label select{background:#16221a;color:#eef4ef;border:1px solid #3b4e3f;border-radius:7px;padding:5px 8px;font-size:14px}
+.fs-panel{pointer-events:auto;align-self:flex-end;background:rgba(10,18,12,.92);border:1px solid rgba(200,237,116,.35);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;max-height:55vh;overflow:auto;min-width:200px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.fs-panel[hidden]{display:none}
+.fs-panel button{text-align:left;background:transparent;border:none;color:#dcead8;padding:9px 14px;border-radius:7px;font-size:15px;white-space:nowrap}
+.fs-panel button:hover{background:#223528}
+.fs-panel button.active{color:#c8ed74;font-weight:600}
+.fs-panel-episodes{max-width:360px}
