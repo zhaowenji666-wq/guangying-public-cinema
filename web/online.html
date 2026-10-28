@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>在线影视 · 光影</title>
     <link rel="stylesheet" href="/style.css?v=08e60023" />
-    <link rel="stylesheet" href="/online.css?v=de2a82ab" />
+    <link rel="stylesheet" href="/online.css?v=fbfd29c8" />
   </head>
   <body data-hls-src="/hls.min.js?v=e3a349d9">
     <aside>
@@ -57,7 +57,7 @@
           <button id="clear-recent" type="button" hidden>清空</button>
         </div>
         <p class="online-note">
-          在线片源来自第三方，播放体验取决于片源与网络。收藏和进度保存在当前浏览器。
+          收藏和观看进度自动保存在当前浏览器，换设备不丢失。
         </p>
       </section>
     <section class="douban-hot">
@@ -71,7 +71,7 @@
     <section id="actor-panel" class="actor-panel" hidden>
         <h2 id="actor-label"></h2>
         <p>
-          点选作品查找可用片源 ·
+          他的作品 · 
           <a id="actor-source" target="_blank" rel="noopener noreferrer"></a>
         </p>
         <div class="actor-filter-row">
@@ -90,7 +90,6 @@
             <p class="eyebrow">DISCOVER & WATCH</p>
             <h2 id="online-title">在线影视</h2>
           </div>
-          <button id="source-settings">⚙ 片源设置</button>
         </div>
         <div class="online-filters">
           <input
@@ -107,13 +106,13 @@
             <option value="">全部类型</option></select
           ><select id="online-year" aria-label="在线影片年份">
             <option value="">全部年份</option></select
-          ><select id="online-source-filter" aria-label="筛选在线片源">
-            <option value="">全部片源</option></select
+          ><select id="online-source-filter" aria-label="筛选播放线路">
+            <option value="">全部线路</option></select
           ><select id="online-sort" aria-label="在线影片排序">
             <option value="relevance">相关度优先</option>
             <option value="year-desc">年份从新到旧</option>
             <option value="year-asc">年份从旧到新</option>
-            <option value="sources">片源数量优先</option>
+            <option value="sources">可播线路多者优先</option>
             <option value="recent">最近保存优先</option></select
           ><label
             ><input
@@ -128,12 +127,12 @@
           ><button id="back-search" hidden>↩ 返回搜索结果</button
           ><span
             ><button id="undo-remove" hidden>撤销移除</button
-            ><button id="retry-failed" hidden>仅重试失败片源</button></span
+            ><button id="retry-failed" hidden>重试未完成的搜索</button></span
           >
         </div>
-        <p id="online-status" role="status">正在载入片源配置…</p>
+        <p id="online-status" role="status">正在准备…</p>
         <details class="source-details">
-          <summary>查看各片源搜索进度</summary>
+          <summary>查看搜索进度</summary>
           <div id="source-progress" class="source-progress"></div>
         </details>
         <div id="online-empty" class="online-empty">
@@ -190,42 +189,39 @@
         ><canvas id="danmaku-canvas" aria-hidden="true"></canvas>
       </div>
       <div class="player-tools">
-        <label
-          >片源画质
-          <select id="source-quality" aria-label="按画质选择视频源">
-            <option value="0">自动优选</option>
-            <option value="2160">4K片源</option>
-            <option value="1440">2K片源</option>
-            <option value="1080">1080P片源</option>
-            <option value="720">720P片源</option>
+        <button id="online-prev" aria-label="上一集">上一集</button
+        ><button id="online-next" aria-label="下一集">下一集</button
+        ><label
+          >画质
+          <select id="source-quality" aria-label="画质">
+            <option value="0">自动</option>
+            <option value="2160">4K</option>
+            <option value="1440">2K</option>
+            <option value="1080">1080P</option>
+            <option value="720">720P</option>
           </select></label
-        ><button id="online-favorite">♡ 收藏</button
-        ><button id="online-watchlist">＋ 待看</button
-        ><button id="online-watched">标记已看完</button
-        ><button id="online-prev">← 上一集</button
-        ><button id="online-next">下一集 →</button
-        ><button id="online-restart">本集从头</button
         ><label
           >倍速
-          <select id="online-speed" aria-label="播放倍速">
+          <select id="online-speed" aria-label="倍速">
             <option value="0.75">0.75×</option>
             <option value="1" selected>1×</option>
             <option value="1.25">1.25×</option>
             <option value="1.5">1.5×</option>
             <option value="2">2×</option>
-            <option value="2.5">2.5×</option>
             <option value="3">3×</option>
-            <option value="3.5">3.5×</option>
-            <option value="4">4×</option>
-            <option value="4.5">4.5×</option>
-            <option value="5">5×</option>
           </select></label
-        ><button id="quick-source">下个片源 ⇥</button
-        ><button id="retry-online">重新连接</button
-        ><button id="player-fullscreen">影院全屏</button
-        ><button id="player-pip">画中画</button
-        ><button id="player-screenshot">画面截图</button
-        ><button id="find-alternative">搜索其他片源</button>
+        ><button id="online-favorite">♡ 收藏</button
+        ><button id="player-fullscreen">全屏</button
+        ><details class="more-tools"><summary aria-label="更多设置">更多</summary>
+          <div class="more-panel">
+            <button id="online-watchlist">＋ 加入待看</button>
+            <button id="online-watched">标记已看完</button>
+            <button id="online-restart">本集从头看</button>
+            <button id="player-pip">画中画</button>
+            <button id="player-screenshot">保存画面截图</button>
+            <button id="retry-online">重新加载本集</button>
+          </div>
+        </details>
       </div>
       <div class="online-monitor">
         <p id="online-player-status" role="status"></p>
@@ -238,7 +234,7 @@
       <div id="cast-links" class="cast-links"></div>
       <p id="online-description"></p>
       <details class="player-settings">
-        <summary>播放器增强 · 画质 / 音轨 / 字幕 / 循环 / 定时</summary>
+        <summary>更多播放设置（音轨 / 字幕 / 定时等）</summary>
         <div class="advanced-controls">
           <label
             >画质
@@ -302,13 +298,11 @@
           ><span id="subtitle-status">可载入本机 SRT/VTT 字幕</span>
         </div>
         <p>
-          快捷键：空格播放 / 暂停，← → 快退 / 快进 10 秒，↑ ↓ 音量，0–9
-          跳转到对应百分比，[ ] 上一集 / 下一集，M 静音，F
-          影院全屏。画质和音轨选项以片源实际提供为准。
+          通常无需修改这里的设置。遇到播放问题时，换一集或返回重新点开影片即可自动恢复。
         </p>
       </details>
       <details class="danmaku-settings">
-        <summary>弹幕 · 哔哩哔哩匹配 / 多文件合并 / 本机记录</summary>
+        <summary>弹幕设置</summary>
         <div class="danmaku-controls">
           <label
             ><input
@@ -391,30 +385,6 @@
       </div>
       <div id="episodes" class="episodes"></div>
     </dialog>
-    <dialog id="sources-dialog">
-      <div class="player-head">
-        <div>
-          <h2>片源设置</h2>
-          <p>来自 LunaTV-config · DecoTV · TVBox 配置融合</p>
-        </div>
-        <button id="sources-close" aria-label="关闭片源设置">✕</button>
-      </div>
-      <p>仅搜索勾选的片源。减少片源可缩短等待时间；结果会逐个显示。</p>
-      <div class="player-tools">
-        <button id="all-sources">全选</button
-        ><button id="no-sources">全不选</button>
-      </div>
-      <div id="source-options"></div>
-      <div class="health-tools">
-        <h3>源可用性检测</h3>
-        <button id="recheck-sources" disabled title="由站点维护者检测">
-          源状态由站点维护者更新
-        </button>
-        <p id="health-summary"></p>
-        <div id="health-report"></div>
-      </div>
-      <p>片源状态由站点维护者更新，部分来源可能临时不可用。</p>
-    </dialog>
     <dialog id="platforms-dialog">
       <div class="player-head">
         <h2>VipVideo · 平台聚合</h2>
@@ -452,6 +422,6 @@
       <span id="update-message"></span
       ><button id="apply-update">应用更新</button>
     </div>
-    <script src="/online.js?v=6f5d56b4"></script>
+    <script src="/online.js?v=cf44065e"></script>
   </body>
 </html>

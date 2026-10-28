@@ -99,3 +99,16 @@
  .quick-actions button{font-size:13px;padding:6px;min-height:40px}
  .online-card>.card-remove{position:static;flex:none}
 }
+
+/* 「更多」菜单：紧凑弹出，不打断工具栏一行 */
+.more-tools{position:relative}
+.more-tools summary{list-style:none;cursor:pointer}
+.more-tools summary::-webkit-details-marker{display:none}
+.more-tools summary{padding:9px 16px;border:1px solid #3b4e3f;border-radius:8px;background:#233028;color:#edf6ed;font-size:14px}
+.more-tools[open] summary{border-color:#c8ed74;color:#c8ed74}
+.more-panel{position:absolute;right:0;bottom:calc(100% + 8px);z-index:20;display:flex;flex-direction:column;gap:6px;background:#1c2a20;border:1px solid #3b4e3f;border-radius:12px;padding:10px;min-width:180px;box-shadow:0 12px 32px rgba(0,0,0,.45)}
+.more-panel button{text-align:left;white-space:nowrap;border:none;background:transparent;color:#e4efe5;padding:9px 12px;border-radius:7px}
+.more-panel button:hover{background:#28382c;}
+/* 用户不关心逐条线路的搜索进度,把胶囊做得更小更淡 */
+.source-progress{min-height:0}
+.source-progress span{font-size:12px;padding:3px 9px;opacity:.65}
